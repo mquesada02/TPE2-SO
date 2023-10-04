@@ -15,7 +15,7 @@ then
 	against=HEAD
 else
 	# Initial commit: diff against an empty tree object
-	against=(git hash-object -t tree /dev/null)
+	against=$(git hash-object -t tree /dev/null)
 fi
 
 # We should pass only added or modified files with .c formats
