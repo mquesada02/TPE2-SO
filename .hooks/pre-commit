@@ -1,0 +1,20 @@
+#!/bin/sh
+
+zero=0
+
+.hooks/pre-commit-clang-format
+clang_format_output=$?
+
+.hooks/pre-commit-cppcheck
+cppcheck_output=$?
+
+if [ "$clang_format_output" -ne "$zero" ]; then
+	echo "\e[1mCommit rejected: fix problems, add and commit again.\e[0m";
+	exit 1;
+elif [ "$cppcheck_output" -ne "$zero" ]; then
+	echo "\e[1mCommit rejected: fix problems, add and commit again.\e[0m";
+	exit 1;
+else
+	echo "\e[1mCommit accepted\e[0m"
+	exit 0;
+fi

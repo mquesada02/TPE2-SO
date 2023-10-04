@@ -21,3 +21,8 @@ echo ""
 sudo apt install pvs-studio
 
 echo ""
+echo "Instalando los hooks"
+echo ""
+cp .hooks/* .git/hooks/
+
+echo "Done!"
