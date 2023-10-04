@@ -20,7 +20,7 @@ echo "Instalando PVStudio"
 echo ""
 sudo apt install pvs-studio
 
-cho "Agregando repositorio de git"
+echo "Agregando repositorio de git"
 sudo add-apt-repository ppa:git-core/ppa
 echo "Corriendo apt update"
 sudo apt update
