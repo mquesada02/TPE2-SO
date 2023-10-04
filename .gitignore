@@ -1,0 +1,19 @@
+# Object files
+*.o
+
+# Executables
+*.exe
+*.out
+
+#Visual Studio Code folder
+.vscode/
+
+#Visual Studio Code: settings.json
+settings.json
+
+#Log Files
+*.log
+*.tasks
+
+#PVS-Studio Stuff
+strace_out
