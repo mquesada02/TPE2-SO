@@ -1,0 +1,21 @@
+#Binary Files
+*.bin
+*.sys
+
+#The images
+*.img
+*.qcow2
+*.vmdk
+
+#Object files
+*.o
+
+#Docker service
+docker.sh
+
+#Bashrc
+.bashrc
+
+.bash_history
+
+settings.json
