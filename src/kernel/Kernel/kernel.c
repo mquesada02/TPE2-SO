@@ -4,6 +4,7 @@
 #include <videodriver.h>
 #include <naiveConsole.h>
 #include <idtLoader.h>
+#include <SimpleMemoryManagerADT.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -81,7 +82,7 @@ int main() {
 
 	// Carga de descriptores del IDT.
 	load_idt(); 	
-	
+	MemoryManagerADT mm = createMM();
 	//Elige escribir directo en pantalla.
 	setScreenBuffer(1);	
 	drawTopLine();
