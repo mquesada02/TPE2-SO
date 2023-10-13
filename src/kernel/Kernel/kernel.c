@@ -4,7 +4,7 @@
 #include <videodriver.h>
 #include <naiveConsole.h>
 #include <idtLoader.h>
-#include <SimpleMemoryManagerADT.h>
+#include <MemoryManagerADT.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
