@@ -82,7 +82,7 @@ int main() {
 
 	// Carga de descriptores del IDT.
 	load_idt(); 	
-	
+	MemoryManagerADT mm = createMM();
 	//Elige escribir directo en pantalla.
 	setScreenBuffer(1);	
 	drawTopLine();
