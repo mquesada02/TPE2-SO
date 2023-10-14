@@ -4,7 +4,7 @@
 
 typedef struct Node {
     void * data; // address of the alloc data
-    size_t size;
+    size_t size; // size of data in the alloc blocks
     char ocuppied;
     FreeList prev;
     FreeList next;
