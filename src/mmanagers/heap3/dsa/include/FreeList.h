@@ -3,11 +3,13 @@
 #include "../../include/MemoryManagerADT.h" // change path for purpose
 
 typedef struct Node {
-    void * data; // if data == null then this block is free
+    void * data; // address of the alloc data
     size_t size;
+    char ocuppied;
     FreeList prev;
     FreeList next;
 } Node;
+
 
 typedef Node * FreeList;
 
