@@ -1,11 +1,16 @@
 #define _MEMORY_MANAGER_H
-// | 0x0000000000050000 |0x000000000009FFFF|320 KiB| Free |
-#define MEMORY_MANAGER_ADDRESS 0x0000000000050000 
-#define TOTAL_HEAP_SIZE 0x000000000004FFFF
 
-#include <stddef.h>
+#include <sys/types.h>
+
+// | 0x0000000000050000 |0x000000000009FFFF|320 KiB| Free |
+// 327679 size
+#define HEAP_SIZE 262144 // 2^18
+#define HEAP_STARTING_ADDRESS 0x0000000000050000
 
 typedef struct MemoryManagerCDT* MemoryManagerADT;
 
 MemoryManagerADT createMM();
+
 void * allocMemory(MemoryManagerADT mm, size_t size);
+void * freeMemory(MemoryManagerADT mm, void * address);
+

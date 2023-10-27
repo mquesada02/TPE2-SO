@@ -3,14 +3,13 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#define HEAP_STARTING_ADDRESS malloc(2048)/* to define */
-#define HEAP_END_ADDRESS HEAP_STARTING_ADDRESS+2048/* to define */
+#define HEAP_SIZE 2048
+#define HEAP_STARTING_ADDRESS malloc(HEAP_SIZE)
 
 typedef struct MemoryManagerCDT* MemoryManagerADT;
 
 MemoryManagerADT createMM();
 
-void * allocFirst(MemoryManagerADT mm, size_t size);
 void * allocMemory(MemoryManagerADT mm, size_t size);
 void * freeMemory(MemoryManagerADT mm, void * address);
 
