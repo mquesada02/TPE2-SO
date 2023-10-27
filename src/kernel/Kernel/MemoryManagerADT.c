@@ -1,9 +1,9 @@
 #include <MemoryManagerADT.h>
+#include <sys/types.h>
 
 #define NULL (void*) 0
 
-
-#define MEMORY_MANAGER_SIZE sizeof(MemoryManagerADT)
+#define MEMORY_MANAGER_SIZE sizeof(MemoryManagerCDT)
 #define STRUCTURE_SIZE ((HEAP_SIZE - MEMORY_MANAGER_SIZE) / 4)
 #define ALLOC_BLOCK ((HEAP_SIZE - MEMORY_MANAGER_SIZE) * 3 / 4)
 
@@ -77,7 +77,7 @@ void * allocMemory(MemoryManagerADT mm, size_t size) {
     return address;
 }
 
-int freeMemory(MemoryManager mm, void *data){
+int freeMemory(MemoryManagerADT mm, void *data) {
     size_t size = delete(mm, data);
     if (size == -1){
         return false;

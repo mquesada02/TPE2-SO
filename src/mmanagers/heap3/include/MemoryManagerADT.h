@@ -11,5 +11,5 @@ typedef struct MemoryManagerCDT* MemoryManagerADT;
 MemoryManagerADT createMM();
 
 void * allocMemory(MemoryManagerADT mm, size_t size);
-void * freeMemory(MemoryManagerADT mm, void * address);
+int freeMemory(MemoryManagerADT mm, void *data);
 
