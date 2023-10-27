@@ -1,5 +1,8 @@
 #include <MemoryManagerADT.h>
 
+#define NULL (void*) 0
+
+
 #define MEMORY_MANAGER_SIZE sizeof(MemoryManagerADT)
 #define STRUCTURE_SIZE ((HEAP_SIZE - MEMORY_MANAGER_SIZE) / 4)
 #define ALLOC_BLOCK ((HEAP_SIZE - MEMORY_MANAGER_SIZE) * 3 / 4)
@@ -7,15 +10,17 @@
 #define true 1
 #define false 0
 
+typedef Node * FreeList;
+
 void initList(MemoryManagerADT mm);
 void * allocFirst(size_t size);
 
 void * insert(MemoryManagerADT mm, size_t size);
-int delete(MemoryManager mm, void *data);
+int delete(MemoryManagerADT mm, void *data);
 void moveLastPhysicalAddress(FreeList node);
 
 void * currentAddress = NULL;
-void *lastPhysicalAddress = NULL;
+FreeList lastPhysicalAddress = NULL;
 
 typedef struct MemoryManagerCDT {
     uint64_t free;
@@ -27,12 +32,12 @@ typedef struct MemoryManagerCDT {
 typedef struct Node {
     void * data; // address of the alloc data
     size_t size; // size of data in the alloc blocks
-    char ocuppied;
+    char occupied;
     FreeList prev;
     FreeList next;
 } Node;
 
-typedef Node * FreeList;
+
 
 void * allocFirst(size_t size) {
     if (currentAddress == NULL) {
@@ -48,7 +53,7 @@ void initList(MemoryManagerADT mm) {
 	mm->dataMemory		= allocFirst(ALLOC_BLOCK);
 	mm->root->data		= mm->dataMemory;
 	mm->root->size		= ALLOC_BLOCK;
-	mm->root->ocuppied	= false;
+	mm->root->occupied	= false;
 	mm->root->prev		= NULL;
 	mm->root->next		= NULL;
 	lastPhysicalAddress = mm->root;
@@ -59,6 +64,7 @@ MemoryManagerADT createMM() {
     mm->free = ALLOC_BLOCK;
     mm->occupied = 0;
     initList(mm); // FreeList init
+	return mm;
 }
 
 void * allocMemory(MemoryManagerADT mm, size_t size) {
@@ -93,16 +99,16 @@ void * insert(MemoryManagerADT mm, size_t size) {
 	FreeList current = mm->root;
 	/* iterate until you find a block where (the data is null and the size
 	 * needed fits) or when the next is null */
-	while (!((current->ocuppied == false && current->size >= size) ||
+	while (!((current->occupied == false && current->size >= size) ||
 			 current->next == NULL)) {
 		current = current->next;
 	}
-	if (current->ocuppied == false) {
+	if (current->occupied == false) {
         if(current->size == size){
             current->occupied = true;
             return current->data;
         }
-		current->ocuppied = true;
+		current->occupied = true;
 		FreeList emptyRemaining	 = lastPhysicalAddress + sizeof(Node);
         lastPhysicalAddress      = emptyRemaining;
         emptyRemaining->next     = current->next;
@@ -110,7 +116,7 @@ void * insert(MemoryManagerADT mm, size_t size) {
         emptyRemaining->prev	 = current;
 		emptyRemaining->size	 = current->size - size;
 		emptyRemaining->data	 = current->data + size;
-		emptyRemaining->ocuppied = false;
+		emptyRemaining->occupied = false;
 	}
 	else {
 		return NULL;
@@ -125,7 +131,7 @@ void * insert(MemoryManagerADT mm, size_t size) {
  * @param data 
  * @return * int Devuelve 1 si libero correctamente la memoria y 0 si no encontro la memoria a liberar
  */
-size_t delete(MemoryManager mm, void *data) {
+size_t delete(MemoryManagerADT mm, void *data) {
     size_t toReturn = -1;
 	FreeList current = mm->root;
 	while (current->data != data && current->next != NULL) {
@@ -137,7 +143,7 @@ size_t delete(MemoryManager mm, void *data) {
     toReturn = current->size;
     
 	//si tanto el anterior como el siguiente apuntan a espacio ocupado es solo marcar como desocupado
-	if (current->prev->ocuppied && current->next->occupied){
+	if (current->prev->occupied && current->next->occupied){
 		current->occupied = false;
 		current->data = NULL;
 	} 
