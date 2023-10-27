@@ -10,6 +10,14 @@
 #define true 1
 #define false 0
 
+typedef struct Node {
+    void * data; // address of the alloc data
+    size_t size; // size of data in the alloc blocks
+    char occupied;
+    Node * prev;
+    Node * next;
+} Node;
+
 typedef Node * FreeList;
 
 void initList(MemoryManagerADT mm);
@@ -28,16 +36,6 @@ typedef struct MemoryManagerCDT {
     FreeList root;
     void * dataMemory;
 } MemoryManagerCDT;
-
-typedef struct Node {
-    void * data; // address of the alloc data
-    size_t size; // size of data in the alloc blocks
-    char occupied;
-    FreeList prev;
-    FreeList next;
-} Node;
-
-
 
 void * allocFirst(size_t size) {
     if (currentAddress == NULL) {
