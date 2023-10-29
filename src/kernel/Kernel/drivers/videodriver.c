@@ -135,8 +135,9 @@ void enableDoubleBuffer(int enable) {
  * @brief Desplaza hacia arriba cada línea si se completa la misma o si se pasa a la siguiente línea
  */
 void scrollUp(){
-	scroll++;
+	//scroll++;
 	memcpy(VBE_mode_info->framebuffer+TOPBAR_SIZE,VBE_mode_info->framebuffer+TOPBAR_SIZE+LINE_SIZE,9*VBE_mode_info->width*VBE_mode_info->height -LINE_SIZE-TOPBAR_SIZE);
+	//scroll = 0;
 }
 
 /**

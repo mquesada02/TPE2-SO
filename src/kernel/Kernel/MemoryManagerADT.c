@@ -1,5 +1,5 @@
 #include <MemoryManagerADT.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #define NULL (void*) 0
 
@@ -10,21 +10,21 @@
 #define true 1
 #define false 0
 
+typedef struct Node * FreeList;
+
 typedef struct Node {
     void * data; // address of the alloc data
     size_t size; // size of data in the alloc blocks
     char occupied;
-    Node * prev;
-    Node * next;
+    FreeList prev;
+    FreeList next;
 } Node;
-
-typedef Node * FreeList;
 
 void initList(MemoryManagerADT mm);
 void * allocFirst(size_t size);
 
 void * insert(MemoryManagerADT mm, size_t size);
-int delete(MemoryManagerADT mm, void *data);
+size_t delete(MemoryManagerADT mm, void *data);
 void moveLastPhysicalAddress(FreeList node);
 
 void * currentAddress = NULL;
@@ -39,7 +39,7 @@ typedef struct MemoryManagerCDT {
 
 void * allocFirst(size_t size) {
     if (currentAddress == NULL) {
-        currentAddress = HEAP_STARTING_ADDRESS + MEMORY_MANAGER_SIZE;
+        currentAddress = ((void *)(HEAP_STARTING_ADDRESS + MEMORY_MANAGER_SIZE));
     }
     void * aux = currentAddress;
     currentAddress += size;
