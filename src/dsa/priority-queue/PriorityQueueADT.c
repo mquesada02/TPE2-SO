@@ -8,7 +8,7 @@ typedef struct PriorityQueueCDT {
     int capacity;
 } PriorityQueueCDT;
 
-PriorityQueueADT createHeap(int capacity) {
+PriorityQueueADT createPQ(int capacity) {
     PriorityQueueADT heap = (PriorityQueueADT) malloc(sizeof(PriorityQueueCDT));
 
     if (heap == NULL)
@@ -72,7 +72,7 @@ void maxHeapify(PriorityQueueADT heap, int index) {
 HeapNode dequeue(PriorityQueueADT heap) {
     
     if (heap->currentSize == 0) {
-        return;
+        return (HeapNode){-1,-1};
     }
 
     HeapNode deleteItem = heap->arr[0];
