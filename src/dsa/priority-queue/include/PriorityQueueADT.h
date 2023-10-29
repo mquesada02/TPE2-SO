@@ -11,6 +11,6 @@ typedef struct HeapNode {
     V data;
 } HeapNode;
 
-PriorityQueueADT createHeap(int capacity);
+PriorityQueueADT createPQ(int capacity);
 void queue(PriorityQueueADT heap, HeapNode data);
 HeapNode dequeue(PriorityQueueADT heap);
