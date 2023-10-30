@@ -126,7 +126,7 @@ size_t delete(void *data) {
 	//si tanto el anterior como el siguiente apuntan a espacio ocupado es solo marcar como desocupado
 	if (current->prev->occupied && current->next->occupied){
 		current->occupied = false;
-		current->data = NULL;
+		//current->data = NULL;
 	} 
     
     else if (!current->prev->occupied) {
