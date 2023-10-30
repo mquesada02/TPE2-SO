@@ -17,5 +17,6 @@ docker.sh
 .bashrc
 
 .bash_history
+.gdb_history
 
 settings.json
