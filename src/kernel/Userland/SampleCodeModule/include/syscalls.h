@@ -16,6 +16,7 @@ extern void syscall_time(char * timeStr);
 extern void syscall_getKeyboardState(char * keys);
 extern void syscall_drawCircle(int x_centre, int y_centre, int r, uint8_t color);
 extern void syscall_drawRectangle(int x, int y, int h, int w, uint8_t color);
+extern void  * syscall_memset(void * destination, int32_t c, uint64_t length);
 
 
 #endif

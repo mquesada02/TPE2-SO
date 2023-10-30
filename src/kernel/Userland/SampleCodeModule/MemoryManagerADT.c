@@ -1,11 +1,8 @@
 #include <MemoryManagerADT.h>
 #include <stdint.h>
+#include <library.h>
 
 #define NULL (void*) 0
-
-#define MEMORY_MANAGER_SIZE sizeof(MemoryManagerCDT)
-#define STRUCTURE_SIZE ((HEAP_SIZE - MEMORY_MANAGER_SIZE) / 4)
-#define ALLOC_BLOCK ((HEAP_SIZE - MEMORY_MANAGER_SIZE) * 3 / 4)
 
 #define true 1
 #define false 0
@@ -20,15 +17,15 @@ typedef struct Node {
     FreeList next;
 } Node;
 
-void initList(MemoryManagerADT mm);
-void * allocFirst(size_t size);
 
-void * insert(MemoryManagerADT mm, size_t size);
-size_t delete(MemoryManagerADT mm, void *data);
+extern void * syscall_init_list(MemoryManagerADT mm, FreeList* lastPhysicalAddress, size_t* alloc_block);
+
+void * insert(size_t size);
+size_t delete(void *data);
 void moveLastPhysicalAddress(FreeList node);
 
-void * currentAddress = NULL;
 FreeList lastPhysicalAddress = NULL;
+size_t ALLOC_BLOCK;
 
 typedef struct MemoryManagerCDT {
     uint64_t free;
@@ -37,50 +34,35 @@ typedef struct MemoryManagerCDT {
     void * dataMemory;
 } MemoryManagerCDT;
 
-void * allocFirst(size_t size) {
-    if (currentAddress == NULL) {
-        currentAddress = ((void *)(HEAP_STARTING_ADDRESS + MEMORY_MANAGER_SIZE));
-    }
-    void * aux = currentAddress;
-    currentAddress += size;
-    return aux;
-}
+static MemoryManagerADT mm = NULL;
 
-void initList(MemoryManagerADT mm) {
-	mm->root			= (FreeList) allocFirst(STRUCTURE_SIZE);
-	mm->dataMemory		= allocFirst(ALLOC_BLOCK);
-	mm->root->data		= mm->dataMemory;
-	mm->root->size		= ALLOC_BLOCK;
-	mm->root->occupied	= false;
-	mm->root->prev		= NULL;
-	mm->root->next		= NULL;
-	lastPhysicalAddress = mm->root;
-}
-
-MemoryManagerADT createMM() {
-    MemoryManagerADT mm = (MemoryManagerADT) HEAP_STARTING_ADDRESS;
+void createMM() {
+    mm = (MemoryManagerADT) 0x0000000000050000;
+	syscall_init_list(mm, &lastPhysicalAddress, &ALLOC_BLOCK);
     mm->free = ALLOC_BLOCK;
     mm->occupied = 0;
-    initList(mm); // FreeList init
-	return mm;
 }
 
-void * allocMemory(MemoryManagerADT mm, size_t size) {
+void * allocMemory(size_t size) {
     if (size <= 0 || mm == NULL) {
         return NULL;
     }
-    void * address = insert(mm,size);
+    void * address = insert(size);
     if (address != NULL) {
         mm->free -= size;
         mm->occupied += size;
     }
+	printf("address %d\n",(size_t)address);
+	printf("size %d\n",size);
     return address;
 }
 
-int freeMemory(MemoryManagerADT mm, void *data) {
-    size_t size = delete(mm, data);
+int freeMemory(void *data) {
+	if (mm == NULL)
+		return false;
+    size_t size = delete(data);
     if (size == -1){
-        return false;
+        return false;	
     }
     mm->free += size;
     mm->occupied -= size;
@@ -93,7 +75,7 @@ int freeMemory(MemoryManagerADT mm, void *data) {
  * @param size Tamaño del bloque solicitado
  * @return void * Puntero a la dirección del espacio alocado.
  */
-void * insert(MemoryManagerADT mm, size_t size) {
+void * insert(size_t size) {
 	FreeList current = mm->root;
 	/* iterate until you find a block where (the data is null and the size
 	 * needed fits) or when the next is null */
@@ -117,6 +99,7 @@ void * insert(MemoryManagerADT mm, size_t size) {
 		emptyRemaining->occupied = false;
 	}
 	else {
+		printf("next: %d\n",current->next);
 		return NULL;
 	}
 	return current->data;
@@ -129,7 +112,7 @@ void * insert(MemoryManagerADT mm, size_t size) {
  * @param data 
  * @return * int Devuelve 1 si libero correctamente la memoria y 0 si no encontro la memoria a liberar
  */
-size_t delete(MemoryManagerADT mm, void *data) {
+size_t delete(void *data) {
     size_t toReturn = -1;
 	FreeList current = mm->root;
 	while (current->data != data && current->next != NULL) {
