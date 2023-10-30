@@ -1,5 +1,5 @@
 #include <stdlib.h> // después reemplazar por nuestro allocMemory en vez de malloc
-#include <PriorityQueueADT.h>
+#include "include/PriorityQueueADT.h"
 
 // Heap
 typedef struct PriorityQueueCDT {

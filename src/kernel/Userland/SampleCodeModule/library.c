@@ -184,6 +184,10 @@ int printf(const char * format, ...){
     return 0;
 }
 
+// void * memset(void * destination, int32_t c, uint64_t length) {
+//     return syscall_memset(destination, c, length);
+// }
+
 // ------------------------------------- SCREEN CONTROL ------------------------------------- //
 
 

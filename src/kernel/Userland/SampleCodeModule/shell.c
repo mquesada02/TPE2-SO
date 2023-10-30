@@ -2,10 +2,12 @@
 #include <library.h>
 #include <pong.h>
 #include <stdint.h>
+#include <MemoryManagerADT.h>
 
 extern void invalidOperation();
 extern void loopRegisters();
 
+extern uint64_t test_mm(uint64_t argc, char *argv[]);
 /**
  * @brief Estructura que contiene el nombre, la descripción y la dirección de la función correspondinte al módulo.
  */
@@ -25,6 +27,7 @@ int modulesCount = 0;
  * @brief Función que inicializa la Shell, y consulta constantemente acerca de qué módulo se desea correr.
  */
 void startShell() {
+    createMM();
     loadAllModules();
     printf("Welcome to the shell\n");
     modules[0].function();
@@ -64,6 +67,7 @@ void loadAllModules() {
     loadModule("clear", "Clears the screen of the shell", &clear);
     loadModule("invalid opcode", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("test registers", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
+    loadModule("test memory", "Test the memory manager", &testMemory);
 }
 
 /**
@@ -182,4 +186,9 @@ void clear() {
 void testRegisters(){
     printf("Press 'Alt' now! (and wait a few seconds)");
     loopRegisters();
+}
+
+void testMemory() {
+    char* params[] = {"12"};
+    test_mm(1, params);
 }

@@ -5,6 +5,8 @@
 #include <keyboardDriver.h>
 #include <time.h>
 #include <clock.h>
+#include <lib.h>
+#include <MemoryManager.h>
 
 extern char buffer;
 extern long int registers_space[];
@@ -99,6 +101,12 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             break;
         case 12:
             drawCharAt(param1, param4, param5, param2, param3);            
+            break;
+        case 13:
+            memset(param1, param2, param3);
+            break;
+        case 14:
+            return initList(param1, param2, param3);
             break;
 	}
 	return 0;
