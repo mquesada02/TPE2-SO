@@ -167,3 +167,7 @@ void moveLastPhysicalAddress(FreeList node) {
 	node->prev->next = node;
 	lastPhysicalAddress -= sizeof(Node); 
 }
+
+void printMemStatus() {
+	printf("Free: %d\nOccupied: %d\nTotal: %d\n", mm->free,mm->occupied, mm->free + mm->occupied);
+}
