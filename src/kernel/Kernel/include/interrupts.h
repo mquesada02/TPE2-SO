@@ -1,6 +1,8 @@
 #ifndef INTERRUPS_H_
 #define INTERRUPS_H_
 
+#include <stdint.h>
+
 extern void _irq00Handler(void);
 extern void _irq01Handler(void);
 extern void _irq02Handler(void);
@@ -11,6 +13,8 @@ extern void _irq08Handler(void);
 extern void _irq08init(void);
 
 extern int syscallsHandler(void);
+
+extern void _timeHandler(void);
 
 extern void _exception0Handler(void);
 extern void _exception6Handler(void);

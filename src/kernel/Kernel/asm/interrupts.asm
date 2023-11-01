@@ -12,6 +12,8 @@ GLOBAL _irq08Handler
 
 GLOBAL _irq08init
 
+GLOBAL _timeHandler
+
 GLOBAL syscallsHandler
 
 GLOBAL _exception0Handler
@@ -25,6 +27,7 @@ EXTERN exceptionDispatcher
 EXTERN getStackBase
 EXTERN waitForEnter
 EXTERN getAltTouched
+EXTERN schedule
 
 section .text
 
@@ -218,6 +221,20 @@ _irq08Handler:
 	mov al, 0x0C	; actualizo el registro c
 	out 70h, al
 	in al, 71h
+
+	popState
+	iretq
+
+_timeHandler:
+	pushState
+
+	mov rdi, rsp
+	call schedule
+	mov rsp, rax
+
+	;send EOI
+	mov al, 20h
+	out 20h, al
 
 	popState
 	iretq

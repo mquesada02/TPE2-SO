@@ -1,4 +1,5 @@
 #include <time.h>
+#include <interrupts.h>
 
 static unsigned long ticks = 0;
 
@@ -6,6 +7,7 @@ static unsigned long ticks = 0;
  * @brief Handler para la interrupción del Timer Tick. Incrementa constantemente el valor de ticks.
  */
 void timer_handler() {
+	//_timeHandler();
 	ticks++;
 }
 
