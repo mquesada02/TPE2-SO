@@ -63,11 +63,12 @@ void loadAllModules() {
     loadModule("time", "Prints the current time of the system", &printTime);
     loadModule("registers", "Prints the values of the processor's registers at the instant they were saved. Registers are saved by pressing Alt", &printRegisters);
     loadModule("divide", "Asks for two numbers and prints the result of dividing one by the other", &divide);
-    loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
+    //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
     loadModule("invalid opcode", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("test registers", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("test memory", "Test the memory manager", &testMemory);
+    loadModule("mem", "Prints the memory status", &mem);
 }
 
 /**
@@ -191,4 +192,8 @@ void testRegisters(){
 void testMemory() {
     char* params[] = {"12"};
     test_mm(1, params);
+}
+
+void mem() {
+    printMemStatus();
 }

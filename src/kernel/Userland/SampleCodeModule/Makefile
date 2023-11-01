@@ -1,6 +1,7 @@
 include ../Makefile.inc
 
 MODULE=0000-sampleCodeModule.bin
+GDB=0000-sampleCodeModule.elf
 SOURCES=$(wildcard [^_]*.c)
 SOURCES_LIBS=$(wildcard libs/*.c)
 SOURCES_ASM=$(wildcard asm/*.asm)
@@ -13,6 +14,7 @@ all: $(MODULE)
 
 $(MODULE): $(SOURCES) $(OBJECTS_LIBS) $(OBJECTS_ASM)
 	$(GCC) $(GCCFLAGS) -I./include -T sampleCodeModule.ld _loader.c $(SOURCES) $(OBJECTS_LIBS) $(OBJECTS_ASM) -o ../$(MODULE)
+	$(GCC) $(GCCFLAGS) -I./include -T sampleCodeModule.ld -Wl,--oformat=elf64-x86-64 _loader.c $(SOURCES) $(OBJECTS_LIBS) $(OBJECTS_ASM) -o ../$(GDB)
 
 %.o : %.asm
 	$(ASM) $(ASMFLAGS) $< -o $@

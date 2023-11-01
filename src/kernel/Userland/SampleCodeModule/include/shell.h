@@ -18,4 +18,5 @@ void divide();
 void clear();
 void testRegisters();
 void testMemory();
+void mem();
 #endif
