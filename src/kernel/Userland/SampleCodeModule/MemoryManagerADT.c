@@ -52,8 +52,6 @@ void * allocMemory(size_t size) {
         mm->free -= size;
         mm->occupied += size;
     }
-	printf("address %d\n",(size_t)address);
-	printf("size %d\n",size);
     return address;
 }
 
@@ -61,7 +59,8 @@ int freeMemory(void *data) {
 	if (mm == NULL)
 		return false;
     size_t size = delete(data);
-    if (size == -1){
+
+    if (size == 0){
         return false;	
     }
     mm->free += size;
@@ -84,11 +83,9 @@ void * insert(size_t size) {
 		current = current->next;
 	}
 	if (current->occupied == false) {
-        if(current->size == size){
-            current->occupied = true;
-            return current->data;
-        }
 		current->occupied = true;
+        if(current->size == size)
+            return current->data;
 		FreeList emptyRemaining	 = lastPhysicalAddress + sizeof(Node);
         lastPhysicalAddress      = emptyRemaining;
         emptyRemaining->next     = current->next;
@@ -97,9 +94,9 @@ void * insert(size_t size) {
 		emptyRemaining->size	 = current->size - size;
 		emptyRemaining->data	 = current->data + size;
 		emptyRemaining->occupied = false;
-	}
+		current->size = size;
+		}
 	else {
-		printf("next: %d\n",current->next);
 		return NULL;
 	}
 	return current->data;
@@ -113,12 +110,12 @@ void * insert(size_t size) {
  * @return * int Devuelve 1 si libero correctamente la memoria y 0 si no encontro la memoria a liberar
  */
 size_t delete(void *data) {
-    size_t toReturn = -1;
+    size_t toReturn = 0;
 	FreeList current = mm->root;
 	while (current->data != data && current->next != NULL) {
 		current = current->next;
 	}
-	if (current->next == NULL) return toReturn;
+	if (current->data != data) return toReturn;
 
 	//liberar el espacio
     toReturn = current->size;
@@ -126,7 +123,6 @@ size_t delete(void *data) {
 	//si tanto el anterior como el siguiente apuntan a espacio ocupado es solo marcar como desocupado
 	if (current->prev->occupied && current->next->occupied){
 		current->occupied = false;
-		//current->data = NULL;
 	} 
     
     else if (!current->prev->occupied) {
@@ -134,15 +130,15 @@ size_t delete(void *data) {
 		if(current->next->occupied){
 			current->prev->size += current->size;
 			current->prev->next = current->next;
-			moveLastPhysicalAddress(current);
+			//moveLastPhysicalAddress(current);
 
 		}		
         //si tanto el anterior como el siguiente apuntaban a espacios libres
         else{
 		    current->prev->size += current->size + current->next->size;
 		    current->prev->next = current->next->next;
-		    moveLastPhysicalAddress(current->next);
-		    moveLastPhysicalAddress(current);
+		    //moveLastPhysicalAddress(current->next);
+		    //moveLastPhysicalAddress(current);
         }
 	}
     
@@ -151,7 +147,7 @@ size_t delete(void *data) {
 		current->occupied = false;
 		current->size += current->next->size;
 		current->next = current->next->next;
-		moveLastPhysicalAddress(current->next);
+		//moveLastPhysicalAddress(current->next);
 	}
     
     return toReturn;

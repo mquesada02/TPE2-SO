@@ -68,7 +68,7 @@ void loadAllModules() {
     loadModule("invalid opcode", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("test registers", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("test memory", "Test the memory manager", &testMemory);
-    loadModule("memory", "Prints the memory status", &printMemStatus);
+    loadModule("mem", "Prints the memory status", &mem);
 }
 
 /**
@@ -192,4 +192,8 @@ void testRegisters(){
 void testMemory() {
     char* params[] = {"12"};
     test_mm(1, params);
+}
+
+void mem() {
+    printMemStatus();
 }
