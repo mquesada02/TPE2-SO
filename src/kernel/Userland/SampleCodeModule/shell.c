@@ -27,7 +27,6 @@ int modulesCount = 0;
  * @brief Función que inicializa la Shell, y consulta constantemente acerca de qué módulo se desea correr.
  */
 void startShell() {
-    createMM();
     loadAllModules();
     printf("Welcome to the shell\n");
     modules[0].function();

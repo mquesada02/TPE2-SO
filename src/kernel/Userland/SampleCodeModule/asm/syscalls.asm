@@ -11,8 +11,9 @@ GLOBAL syscall_enableDoubleBuffer
 GLOBAL syscall_getKeyboardState
 GLOBAL syscall_writeAt
 GLOBAL syscall_getRegisters
-GLOBAL syscall_memset
-GLOBAL syscall_init_list
+GLOBAL syscall_getMemStatus
+GLOBAL syscall_allocMemory
+GLOBAL syscall_freeMemory
 
 section .text
 
@@ -131,22 +132,28 @@ syscall_writeAt:
     popf
     ret
 
-syscall_memset:
+syscall_getMemStatus:
 	pushf
-    mov rcx, rdx   
-	mov rdx, rsi	
-	mov rsi, rdi	
+	mov rdx, rsi
+	mov rsi, rdi
 	mov rdi, 13
 	int 80h
 	popf
 	ret
 	
-syscall_init_list:
+syscall_allocMemory:
 	pushf
-	mov rcx, rdx
-	mov rdx, rsi
 	mov rsi, rdi
 	mov rdi, 14
 	int 80h
 	popf
 	ret
+
+syscall_freeMemory:
+	pushf
+	mov rsi, rdi
+	mov rdi, 15
+	int 80h
+	popf
+	ret
+

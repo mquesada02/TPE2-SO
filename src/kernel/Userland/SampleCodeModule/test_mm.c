@@ -24,7 +24,6 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
     return -1;
 
   for(int p=0;p<2;p++) {
-    printf("______________________________\n");
     rq = 0;
     total = 0;
 

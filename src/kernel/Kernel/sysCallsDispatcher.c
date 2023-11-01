@@ -103,10 +103,13 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             drawCharAt(param1, param4, param5, param2, param3);            
             break;
         case 13:
-            memset(param1, param2, param3);
+            getMemStatus(param1, param2);
             break;
         case 14:
-            return initList(param1, param2, param3);
+            return allocMemory(param1);
+            break;
+        case 15:
+            return freeMemory(param1);
             break;
 	}
 	return 0;

@@ -75,7 +75,8 @@ gdb.execute(f'dashboard expressions -output {registers_tty}')
 gdb.execute(f'dashboard memory -style full True')
 
 gdb.execute(f'dashboard source -style height 0')
-gdb.execute(f'dashboard assembly -style height 0')
+#gdb.execute(f'dashboard assembly -style height 0')
+gdb.execute(f'dashboard threads')
 gdb.execute(f'dashboard source -style highlight-line True')
 gdb.execute(f'dashboard assembly -style highlight-line True')
 

@@ -2,6 +2,7 @@
 #define _SYSCALLS_H_
 
 #include <stdint.h>
+#include <sys/types.h>
 
 extern unsigned char syscall_read();
 extern long int * syscall_getRegisters();
@@ -16,7 +17,8 @@ extern void syscall_time(char * timeStr);
 extern void syscall_getKeyboardState(char * keys);
 extern void syscall_drawCircle(int x_centre, int y_centre, int r, uint8_t color);
 extern void syscall_drawRectangle(int x, int y, int h, int w, uint8_t color);
-extern void  * syscall_memset(void * destination, int32_t c, uint64_t length);
-
+extern void * syscall_allocMemory(size_t size);
+extern int syscall_freeMemory(void *data);
+extern syscall_getMemStatus(size_t * free, size_t * occupied);
 
 #endif
