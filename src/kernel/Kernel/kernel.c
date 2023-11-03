@@ -96,9 +96,9 @@ int main() {
 	initPriorityQueue();
 	
 	//_sti();
+	_sti();
 	//startProcess(0,(EntryPoint)sampleCodeModuleAddress,0,NULL);
 	((EntryPoint)sampleCodeModuleAddress)();
-	_sti();
 	//halting();
 	while(1){
 		__asm__("hlt");

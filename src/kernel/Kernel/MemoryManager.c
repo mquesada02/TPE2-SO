@@ -1,6 +1,7 @@
 #include <MemoryManager.h>
 #include <stdint.h>
 #include <videodriver.h>
+#include <lib.h>
 
 
 #define NULL (void*) 0
@@ -13,6 +14,7 @@
 #define false 0
 
 typedef struct Node * FreeList;
+
 
 typedef struct Node {
     void * data; // address of the alloc data
@@ -102,13 +104,10 @@ int freeMemory(void *data) {
  * @return void * Puntero a la dirección del espacio alocado.
  */
 void * insert(size_t size) {
-	if (size == 0)
-		return NULL;
 	FreeList current = mm->root;
 	/* iterate until you find a block where (the data is null and the size
 	 * needed fits) or when the next is null */
-	while (!((current->occupied == false && current->size >= size) ||
-			 current->next == NULL)) {
+	while (!((current->occupied == false && current->size >= size) || current->next == NULL)) {
 		current = current->next;
 	}
 	if (current->next == NULL && current->size < size)
@@ -127,7 +126,6 @@ void * insert(size_t size) {
 		emptyRemaining->occupied = false;
 		emptyRemaining->present  = true;
 		current->size = size;
-		
 		}
 	
 	return current->data;
@@ -153,68 +151,43 @@ size_t delete(void *data) {
     toReturn = current->size;
 
 	//si tanto el anterior como el siguiente apuntan a espacio ocupado es solo marcar como desocupado
-	//if ((current->prev->occupied && current->next->occupied) || current == mm->root) {
-		current->occupied = false;
-	//} 
+	current->occupied = false;
 
-	if (current == mm->root) 
-		return toReturn;
 
-    if (!current->prev->occupied) {
+    if (current!=mm->root && !current->prev->occupied) {
 		//unicamente el anterior apunta a espacio libre
 		if(current->next->occupied){
 			
 			current->prev->size += current->size;
 			current->prev->next = current->next;
-
+			current->next->prev = current->prev;
 			current->present = false;
-			if(current == lastPhysicalAddress){
-				moveLastPhysicalAddress();
-			}
 			//moveLastPhysicalAddress(current);
 		}		
         //si tanto el anterior como el siguiente apuntaban a espacios libres
         else{
 		    current->prev->size += current->size + current->next->size;
 		    current->prev->next = current->next->next;
-
+			if (current->next->next != NULL) {
+                current->next->next->prev = current->prev;
+            }
 			current->next->present = false;
 			current->present = false;
-			if(current->next == lastPhysicalAddress || current == lastPhysicalAddress){
-				moveLastPhysicalAddress();
-			}
 		    //moveLastPhysicalAddress(current->next);
 		    //moveLastPhysicalAddress(current);
         }
 	}
-    
-	// sizes en 0 en los últimos bloques
-	// llega al final de la lista con size en 0 por alguna razón
-	// se pisa dataMemory
 
 	//unicamente el siguiente apunta a espacio libre
-	else if (current->next->occupied){
-		current->occupied = false;
+	else if (!current->next->occupied){
 		current->size += current->next->size;
-		current->next = current->next->next;
-
 		current->next->present = false;
-		if(current->next == lastPhysicalAddress){
-			moveLastPhysicalAddress();
-		}
+		current->next->prev = current;
+		current->next = current->next->next;
 		//moveLastPhysicalAddress(current->next);
 	}
-    
-	if (current == lastPhysicalAddress) {
-		while (lastPhysicalAddress->occupied == false && lastPhysicalAddress->prev != NULL) {
-			lastPhysicalAddress = lastPhysicalAddress->prev;
-		}
-		if (lastPhysicalAddress->prev == NULL)
-			lastPhysicalAddress = mm->root;
-		else
-			lastPhysicalAddress += sizeof(Node);
-		
-	}
+
+	moveLastPhysicalAddress();
 
     return toReturn;
 }

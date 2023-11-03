@@ -3,6 +3,7 @@
 #include <pong.h>
 #include <stdint.h>
 #include <MemoryManagerADT.h>
+#include <syscalls.h>
 
 extern void invalidOperation();
 extern void loopRegisters();
@@ -189,7 +190,11 @@ void testRegisters(){
 }
 
 void testMemory() {
-    char* params[] = {"8192"};
+    size_t free, occupied;
+    syscall_getMemStatus(&free, &occupied);
+    char buffer[32];
+    numToStr(free, 10, buffer);
+    char* params[] = {buffer};
     test_mm(1, params);
 }
 
