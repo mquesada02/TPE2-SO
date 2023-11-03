@@ -18,13 +18,14 @@ typedef struct Node {
     void * data; // address of the alloc data
     size_t size; // size of data in the alloc blocks
     char occupied;
+	int present;
     FreeList prev;
     FreeList next;
 } Node;
 
 void * insert(size_t size);
 size_t delete(void *data);
-void moveLastPhysicalAddress(FreeList node);
+void moveLastPhysicalAddress();
 
 typedef struct MemoryManagerCDT {
     uint64_t free;
@@ -36,6 +37,7 @@ typedef struct MemoryManagerCDT {
 void * currentAddress = ((void *)(HEAP_STARTING_ADDRESS + MEMORY_MANAGER_SIZE));
 
 FreeList lastPhysicalAddress = NULL;
+FreeList firstPhysicalAddress = NULL;
 
 static MemoryManagerADT mm = NULL;
 
@@ -52,11 +54,12 @@ void initList() {
 	mm->root->data		= mm->dataMemory;
 	mm->root->size		= ALLOC_BLOCK;
 	mm->root->occupied	= false;
+	mm->root->present	= true;
 	mm->root->prev		= NULL;
 	mm->root->next		= NULL;
 
 	lastPhysicalAddress = mm->root;
-
+	firstPhysicalAddress = mm->root;
 }
 
 void createMM() {
@@ -122,6 +125,7 @@ void * insert(size_t size) {
 		emptyRemaining->size	 = current->size - size;
 		emptyRemaining->data	 = current->data + size;
 		emptyRemaining->occupied = false;
+		emptyRemaining->present  = true;
 		current->size = size;
 		
 		}
@@ -155,19 +159,30 @@ size_t delete(void *data) {
 
 	if (current == mm->root) 
 		return toReturn;
-   /*  
+
     if (!current->prev->occupied) {
 		//unicamente el anterior apunta a espacio libre
 		if(current->next->occupied){
+			
 			current->prev->size += current->size;
 			current->prev->next = current->next;
-			//moveLastPhysicalAddress(current);
 
+			current->present = false;
+			if(current == lastPhysicalAddress){
+				moveLastPhysicalAddress();
+			}
+			//moveLastPhysicalAddress(current);
 		}		
         //si tanto el anterior como el siguiente apuntaban a espacios libres
         else{
 		    current->prev->size += current->size + current->next->size;
 		    current->prev->next = current->next->next;
+
+			current->next->present = false;
+			current->present = false;
+			if(current->next == lastPhysicalAddress || current == lastPhysicalAddress){
+				moveLastPhysicalAddress();
+			}
 		    //moveLastPhysicalAddress(current->next);
 		    //moveLastPhysicalAddress(current);
         }
@@ -182,6 +197,11 @@ size_t delete(void *data) {
 		current->occupied = false;
 		current->size += current->next->size;
 		current->next = current->next->next;
+
+		current->next->present = false;
+		if(current->next == lastPhysicalAddress){
+			moveLastPhysicalAddress();
+		}
 		//moveLastPhysicalAddress(current->next);
 	}
     
@@ -194,12 +214,17 @@ size_t delete(void *data) {
 		else
 			lastPhysicalAddress += sizeof(Node);
 		
-	} */
+	}
 
     return toReturn;
 }
 
-
+void moveLastPhysicalAddress(){
+	while(!lastPhysicalAddress->present && lastPhysicalAddress != firstPhysicalAddress){
+		lastPhysicalAddress -= sizeof(Node);
+	}
+}
+/*
 void moveLastPhysicalAddress(FreeList node) {
 	node->data = lastPhysicalAddress->data;
 	node->size = lastPhysicalAddress->size;
@@ -210,6 +235,7 @@ void moveLastPhysicalAddress(FreeList node) {
 	node->prev->next = node;
 	lastPhysicalAddress -= sizeof(Node); 
 }
+*/
 
 void getMemStatus(size_t * free, size_t * occupied) {
     *free = mm->free;
