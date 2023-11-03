@@ -189,7 +189,7 @@ void testRegisters(){
 }
 
 void testMemory() {
-    char* params[] = {"12"};
+    char* params[] = {"8192"};
     test_mm(1, params);
 }
 

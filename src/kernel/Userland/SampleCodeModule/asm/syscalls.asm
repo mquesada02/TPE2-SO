@@ -14,6 +14,7 @@ GLOBAL syscall_getRegisters
 GLOBAL syscall_getMemStatus
 GLOBAL syscall_allocMemory
 GLOBAL syscall_freeMemory
+GLOBAL syscall_startProcess
 
 section .text
 
@@ -157,3 +158,13 @@ syscall_freeMemory:
 	popf
 	ret
 
+syscall_startProcess:
+	pushf
+	mov r8, rcx
+    mov rcx, rdx   
+	mov rdx, rsi	
+	mov rsi, rdi	
+    mov rdi, 16
+	int 80h
+	popf
+	ret 

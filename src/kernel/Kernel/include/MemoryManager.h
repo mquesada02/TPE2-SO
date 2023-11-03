@@ -10,9 +10,6 @@ typedef struct memStatus {
 		size_t occupied;
 } memStatus;
 
-#define MEMORY_MANAGER_SIZE sizeof(MemoryManagerCDT)
-#define STRUCTURE_SIZE ((HEAP_SIZE - MEMORY_MANAGER_SIZE) / 4)
-#define ALLOC_BLOCK ((HEAP_SIZE - MEMORY_MANAGER_SIZE) * 3 / 4)
 // | 0x0000000000050000 |0x000000000009FFFF|320 KiB| Free |
 // 327679 size
 #define HEAP_SIZE 262144 // 2^18

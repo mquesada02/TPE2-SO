@@ -40,7 +40,7 @@ static void setup_IDT_entry (int index, uint64_t offset) {
  */
 void load_idt() {
   // Clear Interrupts
-  _cli();
+  //_cli();
 
   // La interrupción IRQ0 del Timer Tick corresponde a la 0x20. 
   // La rutina de atencion de interrupción es la función _irq00Handler.
@@ -70,5 +70,5 @@ void load_idt() {
   setup_IDT_entry(0x6, (uint64_t)&_exception6Handler);
         
   // Start Interrupts
-	_sti();
+	//_sti();
 }

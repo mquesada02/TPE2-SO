@@ -1,8 +1,8 @@
 //importante -> cambiar malloc y free por los nuestros, pero estan en userspace asi que no se :/
 #include <sys/types.h>
-
-//extern void * allocMemory(size_t size);
-//extern int freeMemory(void *data);
+#include <MemoryManager.h>
+#include <processes.h>
+#include <scheduler.h>
 
 #define NULL 0
 
@@ -27,18 +27,21 @@ typedef struct Queue {
     Node *last;
 } Queue;
 
-Queue priorityQueue[5];
+Queue * priorityQueue;
 static int priorityCounter = 0;
+unsigned long haltRSP = NULL;
 
 void initPriorityQueue(){
+    priorityQueue = (Queue *) allocMemory(sizeof(Queue) * priorityLevels);
     for (int i = 0; i < priorityLevels; i++){
         priorityQueue[i].first = NULL;
         priorityQueue[i].last = NULL;
     }
+    haltRSP = prepareHalt();
 }
 
 void addProcess(int priority, unsigned long rsp){
-    Node *newNode;// = (Node *) malloc(sizeof(Node));
+    Node *newNode = (Node *) allocMemory(sizeof(Node));
     newNode->rsp = rsp;
     newNode->state = ready;
     newNode->quantums = 0;
@@ -123,12 +126,13 @@ unsigned long selectToRun(){
         return priorityQueue[priorityCounter].first->rsp;
     }
     //si salio de aca es porque no encontro nungun proceso ready para correr
-    return NULL; /*stack pointer del proceso halt ******************************************************************************************************************************************************/
+    return haltRSP; /*stack pointer del proceso halt ******************************************************************************************************************************************************/
 }
 
 unsigned long schedule(unsigned long rsp){
+    return rsp;
     unsigned long toReturn = selectToRun();
-    stopProcess(rsp, ready);
+    //stopProcess(rsp, ready);
     return toReturn;
 }
 

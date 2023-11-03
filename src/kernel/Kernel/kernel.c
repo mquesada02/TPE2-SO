@@ -4,6 +4,8 @@
 #include <videodriver.h>
 #include <naiveConsole.h>
 #include <idtLoader.h>
+#include <scheduler.h>
+#include <processes.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -18,6 +20,8 @@ static void * const sampleCodeModuleAddress = (void*)0x400000;
 static void * const sampleDataModuleAddress = (void*)0x500000;
 
 typedef int (*EntryPoint)();
+
+#define NULL (void*) 0
 
 void clearBSS(void * bssAddress, uint64_t bssSize) {
 	memset(bssAddress, 0, bssSize);
@@ -80,14 +84,26 @@ void * initializeKernelBinary() {
 int main() {	
 
 	// Carga de descriptores del IDT.
-	load_idt(); 	
 	//Elige escribir directo en pantalla.
+	_cli();
+	load_idt();
+	
 	createMM();
 	setScreenBuffer(1);	
 	drawTopLine();
 
 	// Llamado a la Shell.
+	initPriorityQueue();
+	
+	//_sti();
+	//startProcess(0,(EntryPoint)sampleCodeModuleAddress,0,NULL);
 	((EntryPoint)sampleCodeModuleAddress)();
+	_sti();
+	//halting();
+	while(1){
+		__asm__("hlt");
+	}
+	
 
 	return 0;
 }

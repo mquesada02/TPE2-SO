@@ -19,6 +19,7 @@ extern void syscall_drawCircle(int x_centre, int y_centre, int r, uint8_t color)
 extern void syscall_drawRectangle(int x, int y, int h, int w, uint8_t color);
 extern void * syscall_allocMemory(size_t size);
 extern int syscall_freeMemory(void *data);
-extern syscall_getMemStatus(size_t * free, size_t * occupied);
+extern int syscall_getMemStatus(size_t * free, size_t * occupied);
+extern void syscall_startProcess(int priority, void (* process), char argc, char* argv[]);
 
 #endif
