@@ -6,6 +6,8 @@
 #include <idtLoader.h>
 #include <scheduler.h>
 #include <processes.h>
+#include <interrupts.h>
+#include <MemoryManager.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -94,14 +96,15 @@ int main() {
 
 	// Llamado a la Shell.
 	initPriorityQueue();
+	initProcesses();
 	
 	//_sti();
-	//startProcess(0,(EntryPoint)sampleCodeModuleAddress,0,NULL);
-	((EntryPoint)sampleCodeModuleAddress)();
-	_sti();
+	//_sti();
+	startProcess(0,(EntryPoint)sampleCodeModuleAddress,1,(char**){"shell"}, 1);
+	//((EntryPoint)sampleCodeModuleAddress)();
 	//halting();
 	while(1){
-		__asm__("hlt");
+		_hlt();
 	}
 	
 

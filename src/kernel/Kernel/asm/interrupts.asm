@@ -158,6 +158,10 @@ _irq00Handler:
 	mov rdi, 0 ; numero de interrupción para el timer (IRQ0)
 	call irqDispatcher
 
+	mov rdi, rsp
+	call schedule
+	mov rsp, rax
+
 	; signal pic EOI (End of Interrupt)
 	mov al, 20h
 	out 20h, al
@@ -225,19 +229,15 @@ _irq08Handler:
 	popState
 	iretq
 
-_timeHandler:
+_timeHandler: 
 	pushState
 
 	mov rdi, rsp
 	call schedule
 	mov rsp, rax
 
-	;send EOI
-	mov al, 20h
-	out 20h, al
-
 	popState
-	iretq
+	ret
 
 ;Zero Division Exception
 _exception0Handler:

@@ -11,10 +11,13 @@
 #define MID_SCREEN_X 512
 #define SCREEN_HEIGHT 768
 #define SCREEN_WIDTH 1018
-#define COMMAND_MAX_SIZE 15
+#define COMMAND_MAX_SIZE 128
+#define MAX_PARAMETERS 10
+#define PARAMETER_MAX_SIZE 32
 
 int getChar();
 void getInput(char * buffer);
+char parseInput(char * input, char * command, char **argv);
 long int * getRegisters();
 
 int putCharAt(char c, int x, int y);

@@ -3,18 +3,23 @@
 #include <pong.h>
 #include <stdint.h>
 #include <MemoryManagerADT.h>
+#include <syscalls.h>
+#include <process.h>
+
+#define NULL (void*) 0
 
 extern void invalidOperation();
 extern void loopRegisters();
 
 extern uint64_t test_mm(uint64_t argc, char *argv[]);
+
 /**
  * @brief Estructura que contiene el nombre, la descripción y la dirección de la función correspondinte al módulo.
  */
 typedef struct {
     char * name;
     char * description;
-    void (*function)(void);
+    void (*function)(char, char *[]);     
 } module;
 
 /**
@@ -29,13 +34,20 @@ int modulesCount = 0;
 void startShell() {
     loadAllModules();
     printf("Welcome to the shell\n");
-    modules[0].function();
+    modules[0].function(0,NULL);
     char input[COMMAND_MAX_SIZE];
+    char **params = syscall_allocMemory(MAX_PARAMETERS*sizeof(char*));
+    for(int i=0;i<MAX_PARAMETERS;i++) {
+        params[i] = syscall_allocMemory(PARAMETER_MAX_SIZE*sizeof(char));
+    }
+    char command[COMMAND_MAX_SIZE];
+    char argc;
     while(1){
         printf("\n");
         print("$ ", BLUE);
         getInput(input);
-        runModule(input);
+        argc = parseInput(input, command, params);
+        runModule(command,argc,params);
     }
 }
 
@@ -64,10 +76,12 @@ void loadAllModules() {
     loadModule("divide", "Asks for two numbers and prints the result of dividing one by the other", &divide);
     //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
-    loadModule("invalid opcode", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
+    loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("test registers", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
-    loadModule("test memory", "Test the memory manager", &testMemory);
+    loadModule("testMem", "Test the memory manager", &testMemory);
     loadModule("mem", "Prints the memory status", &mem);
+    loadModule("testHigh", "Test the high priority process", &testHighPriority);
+    loadModule("pid", "Prints the pid of the current process", &printPID);
 }
 
 /**
@@ -76,11 +90,11 @@ void loadAllModules() {
  * 
  * @param input Nombre del módulo que se busca comparar.
  */
-void runModule(const char * input){
+void runModule(const char * input, char argc, char * params[]){
     printf("\n");    
     for(int i=0;i<TOTAL_MODULES;i++){
         if (strcmp(modules[i].name,input)){
-            modules[i].function();
+            modules[i].function(argc,params);
             return;
         }
     }
@@ -189,10 +203,23 @@ void testRegisters(){
 }
 
 void testMemory() {
-    char* params[] = {"8192"};
+    size_t free, occupied;
+    syscall_getMemStatus(&free, &occupied);
+    char buffer[32];
+    numToStr(free, 10, buffer);
+    char* params[] = {buffer};
     test_mm(1, params);
 }
 
 void mem() {
     printMemStatus();
+}
+
+void testHighPriority(char argc, char * argv[]) {
+    testHighPriorityProcess(argc, argv);
+    return;
+}
+
+void printPID() {
+    printCurrentPID();
 }

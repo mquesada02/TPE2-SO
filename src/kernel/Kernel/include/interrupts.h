@@ -14,7 +14,7 @@ extern void _irq08init(void);
 
 extern int syscallsHandler(void);
 
-extern void _timeHandler(void);
+extern void _timeHandler(int state);
 
 extern void _exception0Handler(void);
 extern void _exception6Handler(void);

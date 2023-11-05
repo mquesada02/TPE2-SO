@@ -1,7 +1,7 @@
 #ifndef _SHELL_H_
 #define _SHELL_H_
 
-#define TOTAL_MODULES 9
+#define TOTAL_MODULES 11
 #define REGISTERS_COUNT 16
 #define DIV_BUFF_SIZE 12
 #define COMMAND_MIN_SIZE 4
@@ -10,7 +10,7 @@
 void startShell();
 void loadModule(char * name, char * description, void (*function)(void));
 void loadAllModules();
-void runModule(const char * input);
+void runModule(const char * input, char argc, char * argv[]);
 void printHelp();
 void printTime();
 void printRegisters();
@@ -19,4 +19,6 @@ void clear();
 void testRegisters();
 void testMemory();
 void mem();
+void testHighPriority(char argc, char * argv[]);
+void printPID();
 #endif
