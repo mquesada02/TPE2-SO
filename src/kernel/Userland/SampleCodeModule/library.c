@@ -14,6 +14,39 @@
  */
 int getChar(){
     return syscall_read();
+}   
+
+char parseInput(char * input, char * command, char ** argv) {
+    int inputIndex = 0;
+    int argCount = 0;
+    int argIndex = 0;
+    
+
+    while (input[inputIndex] != ' ' && input[inputIndex] != '\0') {
+        command[inputIndex] = input[inputIndex];
+        inputIndex++;
+    }
+    command[inputIndex] = '\0';
+    if (input[inputIndex] == '\0') {
+        // no tiene parámetros
+        return argCount;
+    }
+    inputIndex++; // había un ' '
+
+    // tiene al menos un parámetro
+    while (input[inputIndex] != '\0') {
+        while (input[inputIndex] != ' ' && input[inputIndex] != '\0') {
+            argv[argCount][argIndex] = input[inputIndex];
+            inputIndex++;
+            argIndex++;
+        }
+        argv[argCount][argIndex] = '\0';
+        argCount++;
+        if (input[inputIndex] == ' ')
+            inputIndex++;
+        argIndex = 0;
+    }
+    return argCount;
 }
 
 /**

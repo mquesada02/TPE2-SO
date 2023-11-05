@@ -1,4 +1,6 @@
-#include <keyboardDriver.h>
+#include <keyboardDriver.h>s
+#include <scheduler.h>
+#include <processes.h>
 
 const unsigned char ascii[TOTAL_SCANCODES][2] = {
 	{  0, 0  }, { 27, 27 } , {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -30,6 +32,7 @@ static unsigned char character;
 char keyboard_handler() {
 	character = readScanCode();
 	checkConditions(character);
+    unblockProcess(getForegroundPID());
 	return scanCodeToASCII(character);
 }
 

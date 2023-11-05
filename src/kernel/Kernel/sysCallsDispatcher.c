@@ -8,6 +8,8 @@
 #include <lib.h>
 #include <MemoryManager.h>
 #include <processes.h>
+#include <scheduler.h>
+
 
 extern char buffer;
 extern long int registers_space[];
@@ -18,9 +20,12 @@ extern long int registers_space[];
  * @return Valor ASCII guardado en la variable buffer.
  */
 static unsigned char read() {
+    buffer = 0;
+    blockProcess(getRunningPID());
     _sti();
-    buffer = 0; 
-    while ( buffer == 0);
+    //__asm__("int $0x20");
+    //_timeHandler(2); // 2 := blocked
+    while(buffer == 0); // corta cuando termina su quantum
     return buffer;
 }
 
@@ -113,7 +118,16 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             return freeMemory(param1);
             break;
         case 16:
-            startProcess(param1, param2, param3, param4);
+            startProcess(param1, param2, param3, param4, param5);
+            if(param5) //foreground
+                setProcessState(getRunningPID(), blocked);
+            __asm__("int $0x20");
+            break;
+        case 17:
+            exitProcess();
+            break;
+        case 18:
+            return getRunningPID();
             break;
 	}
 	return 0;

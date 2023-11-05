@@ -8,8 +8,8 @@ static unsigned long ticks = 0;
  */
 void timer_handler() {
 	
-	if (ticks % 5000 == 0)
-		//_timeHandler();
+	//if (ticks % 18 == 0)
+	//	_timeHandler();
 
 	ticks++;
 }
