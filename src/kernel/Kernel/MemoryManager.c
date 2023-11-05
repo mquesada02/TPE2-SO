@@ -1,27 +1,24 @@
 #include <MemoryManager.h>
-#include <stdint.h>
-#include <videodriver.h>
 
-
-#define NULL (void*) 0
+// | 0x0000000000050000 |0x000000000009FFFF|320 KiB| Free |
+// 327679 size
+#define HEAP_SIZE 262144 // 2^18
+#define HEAP_STARTING_ADDRESS 0x0000000000050000
 
 #define MEMORY_MANAGER_SIZE sizeof(MemoryManagerCDT)
 #define STRUCTURE_SIZE ((HEAP_SIZE - MEMORY_MANAGER_SIZE) / 4)
 #define ALLOC_BLOCK ((HEAP_SIZE - MEMORY_MANAGER_SIZE) * 3 / 4)
-
-#define true 1
-#define false 0
-
-typedef struct Node * FreeList;
 
 typedef struct Node {
     void * data; // address of the alloc data
     size_t size; // size of data in the alloc blocks
     char occupied;
 	int present;
-    FreeList prev;
-    FreeList next;
+    struct Node * prev;
+    struct Node * next;
 } Node;
+
+typedef struct Node * FreeList;
 
 void * insert(size_t size);
 size_t delete(void *data);
