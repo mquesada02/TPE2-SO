@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <videodriver.h>
+#include <lib.h>
 
 #define NULL (void*) 0
 #define false 0
