@@ -136,3 +136,23 @@ void waitForEnter(){
 	unsigned char c;
 	while((c = read()) != '\n');
 }
+
+void strcpy(char * dest, char * src, int destSize){
+    int i = 0;
+    while(src[i] != '\0' && i < destSize-1){
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+}
+
+int strcmplen(char * str1, char * str2, int len){
+	int i = 0;
+	while(str1[i] != '\0' && str2[i] != '\0' && i < len){
+		if (str1[i] != str2[i]){
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
