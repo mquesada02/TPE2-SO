@@ -44,7 +44,7 @@ void printProcesses() {
 void launchProcess(int priority, char* name, char argc, char* argv[], char foreground) {
     for(int i=0;i<processesCount;i++) {
         if (strcmp(processes[i].name,name)) {
-            startProcess(priority, processes[i].process, argc, argv, foreground, name);
+            startProcess(priority, processes[i].process, argc, argv, foreground, processes[i].name);
             return;
         }
     }

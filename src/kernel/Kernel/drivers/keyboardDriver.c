@@ -35,9 +35,10 @@ char keyboard_handler() {
 	character = readScanCode();
 	checkConditions(character);
     size_t fg = getForegroundPID();
-    if (isKBlocked(fg))
-        unblockProcess(fg);
 	unsigned char asciiCode = scanCodeToASCII(character);
+    if (asciiCode)
+        if (isKBlocked(fg))
+            unblockProcess(fg);
     if (ctrlActivated){
         if (asciiCode == 'c'){
             drawString("^C Killed.",0xFFFFFF,0x000000);
