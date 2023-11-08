@@ -9,6 +9,7 @@ typedef int sem_type;
 typedef struct Node{
     char name[MAX_LENGTH];
     sem_type * sem;
+    int lock;
     int uses;
     struct Node * next;
 } Node;
@@ -22,16 +23,17 @@ Node * newNode(char * name, sem_type * sem){
     Node * aux = (Node *) allocMemory(sizeof(Node));
     strcpy(aux->name, name, MAX_LENGTH);
     aux->sem = sem;
+    aux->lock = 0;
     aux->uses = 1;
     aux->next = NULL;
     return aux;
 }
 
-sem_type* sem_open(char* name){
+sem_type* sem_open(char* name, int value){
     if(sems == NULL){
         sems = (sem_type *) allocMemory(MAX_SEMS * sizeof(sem_type));
         for (int i = 0; i < MAX_SEMS; i++){
-            sems[i] = 0;
+            sems[i] = -1;
         }
     }
     if (semList == NULL){
@@ -47,23 +49,24 @@ sem_type* sem_open(char* name){
         aux = aux->next;
     }
     int freeSpot = 0;
-    while (freeSpot < MAX_SEMS && sems[freeSpot] != 0){
+    while (freeSpot < MAX_SEMS && sems[freeSpot] != -1){
         freeSpot++;
     }
     if(freeSpot == MAX_SEMS){
         return NULL;
     }
+    sems[freeSpot] = value;
     aux = newNode(name, &sems[freeSpot]);
     aux->next = semList;
     semList = aux;
     return aux->sem;
 }
 
-int sem_close(char* name){
+int sem_close(sem_type* sem){
     Node * aux = semList;
     Node * prev = NULL;
     while (aux != NULL){
-        if (strcmplen(aux->name, name, MAX_LENGTH) == 0){
+        if (aux->sem == sem){
             aux->uses--;
             if (aux->uses == 0){
                 if (prev == NULL){
@@ -71,7 +74,7 @@ int sem_close(char* name){
                 } else {
                     prev->next = aux->next;
                 }
-                *(aux->sem) = 0;
+                *(aux->sem) = -1;
                 freeMemory(aux);
             }
             return 0;
@@ -81,6 +84,28 @@ int sem_close(char* name){
     }
     return -1;
 }
+// int sem_close(char* name){
+//     Node * aux = semList;
+//     Node * prev = NULL;
+//     while (aux != NULL){
+//         if (strcmplen(aux->name, name, MAX_LENGTH) == 0){
+//             aux->uses--;
+//             if (aux->uses == 0){
+//                 if (prev == NULL){
+//                     semList = aux->next;
+//                 } else {
+//                     prev->next = aux->next;
+//                 }
+//                 *(aux->sem) = 0;
+//                 freeMemory(aux);
+//             }
+//             return 0;
+//         }
+//         prev = aux;
+//         aux = aux->next;
+//     }
+//     return -1;
+// }
 
 
 
