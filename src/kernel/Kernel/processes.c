@@ -18,10 +18,11 @@ typedef struct process {
     char** argv;
 } processType;
 
+typedef int sem_t;
+
 processType active_processes[MAX_PROCESSES+1];
 char keyboard_blocked_processes[MAX_PROCESSES];
-
-
+void * sem_blocked_processes[MAX_PROCESSES];
 
 extern unsigned long prepare_process(void * memory, void (* process), char argc, char* argv[]);
 
@@ -33,6 +34,7 @@ void initProcesses() {
         active_processes[i].argc = 0;
         active_processes[i].argv = NULL;
         keyboard_blocked_processes[i] = 0;
+        sem_blocked_processes[i] = NULL;
     }
     active_processes[MAX_PROCESSES].alive = false;
     active_processes[MAX_PROCESSES].state = exited;
@@ -42,6 +44,12 @@ void blockProcess(size_t pid) {
     setProcessState(pid, blocked);
     if (pid < 0 || pid >= MAX_PROCESSES) return;
     keyboard_blocked_processes[pid] = true;
+}
+
+void blockProcessSem(size_t pid, sem_t * sem){
+    setProcessState(pid, blocked);
+    if (pid < 0 || pid >= MAX_PROCESSES) return;
+    sem_blocked_processes[pid] = sem;
 }
 
 int isKBlocked(size_t pid) {

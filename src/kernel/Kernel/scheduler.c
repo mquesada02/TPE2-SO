@@ -1,7 +1,6 @@
 //importante -> cambiar malloc y free por los nuestros, pero estan en userspace asi que no se :/
 #include <sys/types.h>
 #include <MemoryManager.h>
-#include <processes.h>
 #include <scheduler.h>
 
 #define NULL 0
@@ -10,8 +9,6 @@
 
 #define prioritiesAmount 24
 static int initialPriority = 0;
-
-static size_t runningPID = MAX_PROCESSES;
 
 static size_t foregroundPID = 1; // shell pid by default
 

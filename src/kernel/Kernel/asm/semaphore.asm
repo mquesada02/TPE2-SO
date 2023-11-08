@@ -1,7 +1,7 @@
 GLOBAL sem_wait_asm
 
 EXTERN runningPID
-EXTERN
+EXTERN blockProcess
 
 section .text
 
@@ -13,6 +13,7 @@ sem_mutex:
     xchg rax, [rdi] 
     cmp rax, 0
     je .end
-    ;bloquear
+    mov rdi, runningPID
+    blockProcess
 .end:
     ret

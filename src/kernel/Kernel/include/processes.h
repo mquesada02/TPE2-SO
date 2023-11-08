@@ -3,6 +3,7 @@
 #define MAX_PROCESSES 10
 #define HALT_PID 0
 #define SHELL_PID 1
+#define KEYBOARD 1
 
 void initProcesses();
 void startProcess(int priority, void (* process), char argc, char* argv[], char foreground, char* name);

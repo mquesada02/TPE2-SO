@@ -1,5 +1,7 @@
 #include <sys/types.h>
-static size_t runningPID = 15;
+#include <processes.h>
+
+static size_t runningPID = MAX_PROCESSES;
 
 enum state {running, ready, blocked, exited};
 
