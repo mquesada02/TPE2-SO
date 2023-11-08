@@ -24,7 +24,6 @@ static unsigned char read() {
     blockProcess(getRunningPID());
     _sti();
     //__asm__("int $0x20");
-    //_timeHandler(2); // 2 := blocked
     while(buffer == 0); // corta cuando termina su quantum
     return buffer;
 }
@@ -118,8 +117,12 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             return freeMemory(param1);
             break;
         case 16:
-            startProcess(param1, param2, param3, param4, param5);
-            if(param5) //foreground
+            struct processStart {
+                char foreground;
+                char * name;
+            };
+            startProcess(param1, param2, param3, param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
+            if(((struct processStart *)param5)->foreground) //foreground
                 setProcessState(getRunningPID(), blocked);
             __asm__("int $0x20");
             break;
@@ -128,6 +131,12 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             break;
         case 18:
             return getRunningPID();
+            break;
+        case 19:
+            killProcess(param1);
+            break;
+        case 20:
+            printProcesses();
             break;
 	}
 	return 0;

@@ -33,6 +33,7 @@ int modulesCount = 0;
  */
 void startShell() {
     loadAllModules();
+    initProcesses();
     printf("Welcome to the shell\n");
     modules[0].function(0,NULL);
     char input[COMMAND_MAX_SIZE];
@@ -77,11 +78,12 @@ void loadAllModules() {
     //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
     loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
-    loadModule("test registers", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
-    loadModule("testMem", "Test the memory manager", &testMemory);
+    loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("mem", "Prints the memory status", &mem);
-    loadModule("testHigh", "Test the high priority process", &testHighPriority);
     loadModule("pid", "Prints the pid of the current process", &printPID);
+    loadModule("pstart", "Start a new process", &pstart);
+    loadModule("kill","Kill a process", &killProcess);
+    loadModule("ps","Prints all processes", &printCurrentProcesses);
 }
 
 /**
@@ -107,17 +109,30 @@ void runModule(const char * input, char argc, char * params[]){
 /**
  * @brief Función correspondiente para el módulo de "help". Imprime todas las funcionalidades disponibles.
  */
-void printHelp() {
+void printHelp(char argc, char * argv[]) {
     printf("The shell's functionalities are the following:\n");
-    for(int i=0; i<TOTAL_MODULES; i++) {
-        printf("\n");
-        print(" - ", GREEN);
-        print(modules[i].name, GREEN);
-        printf(" : ");
-        printf(modules[i].description);
+    if (argc == 0 || (argc == 1 && argv[0][0] == '1')) {
+        for(int i=0; i<2*TOTAL_MODULES/3; i++) {
+            printf("\n");
+            print(" - ", GREEN);
+            print(modules[i].name, GREEN);
+            printf(" : ");
+            printf(modules[i].description);
+        }
+    } else if (argc == 1 && argv[0][0] == '2') {
+        for(int i=2*TOTAL_MODULES/3; i<TOTAL_MODULES; i++) {
+            printf("\n");
+            print(" - ", GREEN);
+            print(modules[i].name, GREEN);
+            printf(" : ");
+            printf(modules[i].description);
+        }
+    } else {
+        printf("Invalid page number. Valid pages are 1 and 2.");
     }
+    
     printf("\n");
-    printf("\nEnter the chosen functionality's name through the command line and press enter to run it");
+    printf("\nEnter the chosen functionality's name through the command line and press enter to run it.\nTo see more commands use 'help <page>'");
 }
 
 /**
@@ -202,24 +217,37 @@ void testRegisters(){
     loopRegisters();
 }
 
-void testMemory() {
-    size_t free, occupied;
-    syscall_getMemStatus(&free, &occupied);
-    char buffer[32];
-    numToStr(free, 10, buffer);
-    char* params[] = {buffer};
-    test_mm(1, params);
-}
-
 void mem() {
     printMemStatus();
 }
 
-void testHighPriority(char argc, char * argv[]) {
-    testHighPriorityProcess(argc, argv);
-    return;
+void pstart(char argc, char * argv[]) {
+    if (strcmp(argv[0],"-a")) {
+        printProcesses();
+        return;
+    }
+    if (argc < 2) {
+        printf("Usage: pstart <priority> <process> [args]\n To get available processes, type 'pstart -a'\n");
+        return;
+    }
+    int priority = strToNum(argv[0]);
+    if (priority < 1 || priority > 4) {
+        printf("Invalid priority. Valid priorities are 1, 2, 3 and 4.\n");
+        return;
+    }
+    char foreground = argv[argc-1][0]=='&';
+    launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
 }
 
 void printPID() {
     printCurrentPID();
+}
+
+void killProcess(char argc, char * argv[]) {
+    syscall_kill(strToNum(argv[0]));
+    printf("Killed the process with PID %s.\n",argv[0]);
+}
+
+void printCurrentProcesses() {
+    syscall_ps();
 }

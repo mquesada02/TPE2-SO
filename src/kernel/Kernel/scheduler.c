@@ -8,18 +8,18 @@
 
 #define maxQuantums 4
 
-#define prioritiesAmount 15
+#define prioritiesAmount 24
 static int initialPriority = 0;
 
+static size_t runningPID = MAX_PROCESSES;
+
 static size_t foregroundPID = 1; // shell pid by default
-#define HALT_PID 0
 
 #define priorityLevels 5
 
 typedef struct Node {
     unsigned long rsp;
     size_t pid;
-    enum state state;
     char foreground;
     int quantums;
     struct Node *next;
@@ -47,7 +47,6 @@ void addProcess(int priority, unsigned long rsp, size_t pid, char foreground){
     Node *newNode = (Node *) allocMemory(sizeof(Node));
     newNode->rsp = rsp;
     newNode->pid = pid;
-    newNode->state = ready;
     newNode->foreground = foreground;
     newNode->quantums = 0;
     newNode->next = NULL;
@@ -59,6 +58,67 @@ void addProcess(int priority, unsigned long rsp, size_t pid, char foreground){
         priorityQueue[priority].last->next = newNode;
         priorityQueue[priority].last = newNode;
         newNode->next = priorityQueue[priority].first;
+    }
+}
+
+void printCurrentStatus(Node * current, int priority) {
+    char buffer[128];
+    //drawString("",0xFFFFFF,0x000000);
+    numToStr(current->pid,10,buffer);
+    drawString(buffer,0xFFFFFF,0x000000);
+    drawString("   ",0xFFFFFF,0x000000);
+    numToStr(priority,10,buffer);
+    drawString(buffer,0xFFFFFF,0x000000);
+    drawString("        ",0xFFFFFF,0x000000);
+    numToStr(current->rsp,10,buffer);
+    drawString(buffer,0xFFFFFF,0x000000);
+    drawString(" ",0xFFFFFF,0x000000);
+    numToStr(getRBP(current->pid),10,buffer);
+    drawString(buffer,0xFFFFFF,0x000000);
+    drawString(" ",0xFFFFFF,0x000000);
+    numToStr(current->foreground,10,buffer);
+    drawString(buffer,0xFFFFFF,0x000000);
+    drawString("          ",0xFFFFFF,0x000000);
+    drawString(getName(current->pid),0xFFFFFF,0x000000);
+    drawNextLine();
+}
+
+void printProcesses() {
+    drawString("PID Priority RSP    RBP    Foreground Name",0xFFFFFF,0x000000);
+    drawNextLine();
+    for(int i=0;i<priorityLevels; i++) {
+        Node * current = priorityQueue[i].first;
+        Node * last = priorityQueue[i].last;
+        if (current == NULL) continue;
+        while (current != last) {
+            printCurrentStatus(current,i);
+            current = current->next;
+        }
+        printCurrentStatus(current,i);
+    }
+}
+
+void removeProcess(size_t pid) {
+    for (int i=0;i<priorityLevels;i++) {
+        Node * current = priorityQueue[i].first;
+        Node * prev = priorityQueue[i].last;
+        Node * last = priorityQueue[i].last;
+        if (current == NULL) continue;
+        while (current->pid != pid && current != last) {
+            current = current->next;
+            prev = prev->next;
+        }
+        if (current->pid == pid) {
+            prev->next = current->next;
+            if (current == priorityQueue[i].first) {
+                priorityQueue[i].first = current->next;
+            }
+            if (current == priorityQueue[i].last) {
+                priorityQueue[i].last = prev;
+            }
+            freeMemory(current);
+            return;
+        }
     }
 }
 
@@ -123,6 +183,7 @@ void addProcess(int priority, unsigned long rsp, size_t pid, char foreground){
     }
 } */
 
+
 void stopProcess(unsigned long rsp, int state) {
     for(int i=0;i<priorityLevels;i++) {
         Node * current = priorityQueue[i].first;
@@ -133,12 +194,10 @@ void stopProcess(unsigned long rsp, int state) {
             prev = prev->next;
         }
         if (current->pid == runningPID) {
-            current->state = state;
-            if (rsp != 0) { // para aprovecharlo para blockRunning
-                current->rsp = rsp;
-                if (current->pid == HALT_PID)
-                    haltRSP = rsp;
-            }
+            setProcessState(runningPID, state);
+            current->rsp = rsp;
+            if (current->pid == HALT_PID)
+                haltRSP = rsp;
             
             /* if (current->quantums == maxQuantums) {
                 current->quantums = 0;
@@ -152,10 +211,10 @@ void stopProcess(unsigned long rsp, int state) {
                 } else {
                     if (current == priorityQueue[i].first) {
                         priorityQueue[i].first = current->next;
-                        priorityQueue[i].last->next = current->next;
+                        priorityQueue[i].last->next = priorityQueue[i].first;
                     } else if (current == priorityQueue[i].last) {
                         priorityQueue[i].last = prev;
-                        prev->next = current->next;
+                        prev->next = priorityQueue[i].first;
                     } else {
                         // está "entre medio" del primero y el último
                         prev->next = current->next;
@@ -175,31 +234,6 @@ void stopProcess(unsigned long rsp, int state) {
         }
     }
 }
-/* 
-void blockRunningProcess() {
-    stopProcess(0, blocked);
-}
-
-void unblockForegroundProcess(char reason) {
-    if (reason == 'r') {
-        if (isBlocked(foregroundPID))
-            unblockForeground();
-    }
-}
-
-void unblockForeground() {
-    for(int i=0;i<priorityLevels;i++) {
-        Node * current = priorityQueue[i].first;
-        Node * last = priorityQueue[i].last;
-        while (current->pid != foregroundPID && current != last) {
-            current = current->next;
-        }
-        if (current->pid == foregroundPID) {
-            current->state = ready;
-            return;
-        }
-    }
-} */
 
 unsigned long selectToRun(){
     setPriorityCounter();
@@ -212,22 +246,24 @@ unsigned long selectToRun(){
             continue;
         }
         Node *aux = priorityQueue[priorityCounter].last;
-        while(priorityQueue[priorityCounter].first->state != ready && priorityQueue[priorityCounter].first != aux){
+        while(getProcessState(priorityQueue[priorityCounter].first->pid) != ready && priorityQueue[priorityCounter].first != aux){
             priorityQueue[priorityCounter].last = priorityQueue[priorityCounter].first;
             priorityQueue[priorityCounter].first = priorityQueue[priorityCounter].first->next;
         }
-        if(priorityQueue[priorityCounter].first->state != ready){
+        if(getProcessState(priorityQueue[priorityCounter].first->pid) != ready){
             priorityCounter = (priorityCounter + 1) % priorityLevels;
             i++;
             continue;
         } else {
-            priorityQueue[priorityCounter].first->state = running;
+            setProcessState(priorityQueue[priorityCounter].first->pid, ready);
             runningPID = priorityQueue[priorityCounter].first->pid;
             if (priorityQueue[priorityCounter].first->foreground)
                 foregroundPID = runningPID;
-
             priorityQueue[priorityCounter].first->quantums++;
-            return priorityQueue[priorityCounter].first->rsp;
+            unsigned long toReturn = priorityQueue[priorityCounter].first->rsp;
+            priorityQueue[priorityCounter].last = priorityQueue[priorityCounter].first;
+            priorityQueue[priorityCounter].first = priorityQueue[priorityCounter].first->next;
+            return toReturn;
         }
         
     }
@@ -236,23 +272,9 @@ unsigned long selectToRun(){
     return haltRSP;
 }
 
-void setProcessStatePQ(size_t pid, int state) {
-    for(int i=0;i<priorityLevels;i++) {
-        Node * current = priorityQueue[i].first;
-        Node * last = priorityQueue[i].last;
-        while (current->pid != pid && current != last) {
-            current = current->next;
-        }
-        if (current->pid == pid) {
-            current->state = state;
-            return;
-        }
-    }
-
-}
 
 unsigned long schedule(unsigned long rsp){
-    stopProcess(rsp, getProcessState(runningPID));
+    stopProcess(rsp, getProcessState(getRunningPID()));
     unsigned long toReturn = selectToRun();
     return toReturn;
 }
@@ -265,32 +287,47 @@ size_t getForegroundPID() {
     return foregroundPID;
 }
 
+void setForegroundPID(size_t foreground) {
+    foregroundPID = foreground;
+}
+
+
 //determina desde que nivel de prioridad arranca el scheduler a buscar un proceso, y dependiendo de la prioridad arranca mas veces por ese
 void setPriorityCounter(){
     switch(initialPriority){
         case 0:
-        case 5:
-        case 9:
-        case 12:
-        case 14:
-            priorityCounter = 0;
-            break;
         case 1:
         case 6:
-        case 10:
-        case 13:
-            priorityCounter = 1;
-            break;
-        case 2:
         case 7:
         case 11:
-            priorityCounter = 2;
+        case 12:
+        case 15:
+        case 16:
+        case 18:
+        case 19:
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+            priorityCounter = 0;
+            break;
+        case 2:
+        case 8:
+        case 13:
+        case 17:
+
+            priorityCounter = 1;
             break;
         case 3:
-        case 8:
-            priorityCounter = 3;
+        case 9:
+        case 14:
+            priorityCounter = 2;
             break;
         case 4:
+        case 10:
+            priorityCounter = 3;
+            break;
+        case 5:
             priorityCounter = 4;
             break;
     }

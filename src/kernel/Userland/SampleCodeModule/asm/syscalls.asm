@@ -17,6 +17,8 @@ GLOBAL syscall_freeMemory
 GLOBAL syscall_startProcess
 GLOBAL syscall_exit
 GLOBAL syscall_getpid
+GLOBAL syscall_kill
+GLOBAL syscall_ps
 
 section .text
 
@@ -164,7 +166,7 @@ syscall_startProcess:
 	pushf
 	mov r9, r8
 	mov r8, rcx
-    mov rcx, rdx   ; arreglar el pasaje de parametros
+    mov rcx, rdx   
 	mov rdx, rsi	
 	mov rsi, rdi	
     mov rdi, 16
@@ -182,6 +184,20 @@ syscall_exit:
 syscall_getpid:
 	pushf
 	mov rdi, 18
+	int 80h
+	popf
+	ret
+
+syscall_kill:
+	pushf
+	mov rsi, rdi
+	mov rdi, 19
+	int 80h
+	popf
+	ret
+syscall_ps:
+	pushf
+	mov rdi, 20
 	int 80h
 	popf
 	ret

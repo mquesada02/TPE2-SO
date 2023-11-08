@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+struct processStart {
+    char foreground;
+    char * name;
+};
+
 extern unsigned char syscall_read();
 extern long int * syscall_getRegisters();
 extern void syscall_writeAt(unsigned char c, int x, int y, int FGColor, int BGColor);
@@ -20,8 +25,10 @@ extern void syscall_drawRectangle(int x, int y, int h, int w, uint8_t color);
 extern void * syscall_allocMemory(size_t size);
 extern int syscall_freeMemory(void *data);
 extern int syscall_getMemStatus(size_t * free, size_t * occupied);
-extern void syscall_startProcess(int priority, void (* process), char argc, char* argv[], char foreground);
+extern void syscall_startProcess(int priority, void (* process), char argc, char* argv[], struct processStart * ps);
 extern void syscall_exit();
 extern size_t syscall_getpid();
+extern void syscall_kill(size_t pid);
+extern void syscall_ps();
 
 #endif

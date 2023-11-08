@@ -1,5 +1,11 @@
 #include <stdint.h>
 
+// tests
+
+uint64_t test_mm(uint64_t argc, char *argv[]);
+
+// utils
+
 uint32_t GetUint();
 uint32_t GetUniform(uint32_t max);
 uint8_t memcheck(void *start, uint8_t value, uint32_t size);
