@@ -111,8 +111,7 @@ void endProcess(size_t pid) {
     setProcessState(pid, exited);
     removeProcess(pid);
     enableShell();
-    __asm__("sti");
-    __asm__("int $0x20");
+    _stint20();
 }
 
 void exitProcess() {

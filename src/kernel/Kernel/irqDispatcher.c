@@ -43,7 +43,9 @@ void int_20() {
  * @brief Función correspondiente a la interrupción número 21h, sobre el teclado.
  */
 void int_21() {
-	buffer = keyboard_handler();
+	char test = keyboard_handler();
+	if(test)
+		buffer = keyboard_handler();
 }
 
 /**

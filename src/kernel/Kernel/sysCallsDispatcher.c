@@ -22,9 +22,10 @@ extern long int registers_space[];
 static unsigned char read() {
     buffer = 0;
     blockProcess(getRunningPID());
-    _sti();
+    _stint20();
+    //_sti();
     //__asm__("int $0x20");
-    while(buffer == 0); // corta cuando termina su quantum
+    //while(buffer == 0); // corta cuando termina su quantum
     return buffer;
 }
 
@@ -124,7 +125,7 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             startProcess(param1, param2, param3, param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
             if(((struct processStart *)param5)->foreground) //foreground
                 setProcessState(getRunningPID(), blocked);
-            __asm__("int $0x20");
+            _stint20();
             break;
         case 17:
             exitProcess();

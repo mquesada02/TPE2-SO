@@ -5,6 +5,7 @@ GLOBAL picMasterMask
 GLOBAL picSlaveMask
 GLOBAL haltcpu
 GLOBAL _hlt
+GLOBAL _stint20
 
 GLOBAL _irq00Handler
 GLOBAL _irq01Handler
@@ -237,6 +238,11 @@ _timeHandler:
 	mov rsp, rax
 
 	popState
+	ret
+
+_stint20:
+	sti
+	int 20h
 	ret
 
 ;Zero Division Exception
