@@ -110,12 +110,18 @@ void removeProcess(size_t pid) {
         }
         if (current->pid == pid) {
             prev->next = current->next;
-            if (current == priorityQueue[i].first) {
+            if (priorityQueue[i].first == priorityQueue[i].last) {
+                priorityQueue[i].first = NULL;
+                priorityQueue[i].last = NULL;
+            } else {
+                if (current == priorityQueue[i].first) {
                 priorityQueue[i].first = current->next;
+                }
+                if (current == priorityQueue[i].last) {
+                    priorityQueue[i].last = prev;
+                }
             }
-            if (current == priorityQueue[i].last) {
-                priorityQueue[i].last = prev;
-            }
+            
             freeMemory(current);
             return;
         }
