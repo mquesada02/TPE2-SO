@@ -1,4 +1,5 @@
 #include <sys/types.h>
+static size_t runningPID = 15;
 
 enum state {running, ready, blocked, exited};
 

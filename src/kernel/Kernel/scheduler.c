@@ -11,8 +11,6 @@
 #define prioritiesAmount 15
 static int initialPriority = 0;
 
-static size_t runningPID = 15;
-
 static size_t foregroundPID = 1; // shell pid by default
 #define HALT_PID 0
 
