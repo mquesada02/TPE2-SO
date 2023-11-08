@@ -100,7 +100,7 @@ int main() {
 	
 	//_sti();
 	//_sti();
-	startProcess(0,(EntryPoint)sampleCodeModuleAddress,1,(char**){"shell"}, 1);
+	startProcess(0,(EntryPoint)sampleCodeModuleAddress,1,(char**){"shell"}, 1, "shell");
 	//((EntryPoint)sampleCodeModuleAddress)();
 	//halting();
 	while(1){

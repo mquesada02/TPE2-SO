@@ -1,6 +1,7 @@
-#include <keyboardDriver.h>s
+#include <keyboardDriver.h>
 #include <scheduler.h>
 #include <processes.h>
+#include <videodriver.h>
 
 const unsigned char ascii[TOTAL_SCANCODES][2] = {
 	{  0, 0  }, { 27, 27 } , {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -19,6 +20,7 @@ const unsigned char ascii[TOTAL_SCANCODES][2] = {
 
 static int shiftActivated = 0;
 static int capslockActivated = 0;
+static int ctrlActivated = 0;
 static char altTouched = 0; 
 static unsigned char character;
 
@@ -32,8 +34,19 @@ static unsigned char character;
 char keyboard_handler() {
 	character = readScanCode();
 	checkConditions(character);
-    unblockProcess(getForegroundPID());
-	return scanCodeToASCII(character);
+    size_t fg = getForegroundPID();
+    if (isKBlocked(fg))
+        unblockProcess(fg);
+	unsigned char asciiCode = scanCodeToASCII(character);
+    if (ctrlActivated){
+        if (asciiCode == 'c'){
+            drawString("^C Killed.",0xFFFFFF,0x000000);
+            drawNextLine();
+            killProcess(fg);
+            return 0;
+        }
+    }
+    return asciiCode;
 }
 
 /**
@@ -62,6 +75,13 @@ void checkConditions(unsigned char scanCode) {
     if (scanCode == ALT_KEY){
         altTouched = 1; 
     } 
+    else if(scanCode == CTRL_DOWN) {
+        ctrlActivated = 1;
+    }
+    else if(scanCode == CTRL_UP) {
+        ctrlActivated = 0;
+    }
+    else
     if(scanCode == SHFT_DOWN || scanCode == RSHFT_DOWN) {
         shiftActivated = 1;
     }
