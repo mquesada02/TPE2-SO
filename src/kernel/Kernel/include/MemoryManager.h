@@ -9,11 +9,6 @@
 #define false 0
 #define true 1
 
-//se usa esto???
-typedef struct memStatus {
-		size_t free;
-		size_t occupied;
-} memStatus;
 
 
 typedef struct MemoryManagerCDT* MemoryManagerADT;

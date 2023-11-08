@@ -1,6 +1,8 @@
 #define _SEMAPHORE_H_
 #include <MemoryManager.h>
 #include <lib.h>
+#include <scheduler.h>
+#include <processes.h>
 
 typedef int sem_type;
 

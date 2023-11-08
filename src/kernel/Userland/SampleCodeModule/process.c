@@ -12,12 +12,13 @@ typedef struct process {
 process processes[MAX_PROCESSES];
 static int processesCount = 0;
 
-void startProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name) {
+int startProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name) {
     struct processStart * ps = allocMemory(sizeof(struct processStart));
     ps->foreground = foreground;
     ps->name = name;
-    syscall_startProcess(priority, process, argc, argv, ps);
+    int value = syscall_startProcess(priority, process, argc, argv, ps);
     freeMemory(ps);
+    return value;
 }
 
 void loadProcess(char* name, char* description, void (* process)(char, char*[])) {
@@ -32,6 +33,7 @@ void initProcesses() {
     loadProcess("test","Testing process", &testingProcess);
     loadProcess("loop","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
+    loadProcess("testProcesses","Test the processes functions", &test_processes);
 }
 
 void printProcesses() {
@@ -41,11 +43,10 @@ void printProcesses() {
     }
 }
 
-void launchProcess(int priority, char* name, char argc, char* argv[], char foreground) {
+int launchProcess(int priority, char* name, char argc, char* argv[], char foreground) {
     for(int i=0;i<processesCount;i++) {
         if (strcmp(processes[i].name,name)) {
-            startProcess(priority, processes[i].process, argc, argv, foreground, processes[i].name);
-            return;
+            return startProcess(priority, processes[i].process, argc, argv, foreground, processes[i].name);
         }
     }
     printf("No process with name '%s' found\n",name);
@@ -69,6 +70,8 @@ void infiniteProcess(char argc, char* argv[]) {
     printf("Infinite process started:\nPID: %d\n",pid);
     while(1) {/* printf("PID:%d\n",pid); */};
 }
+
+// ---------------------------------------------- TESTS ----------------------------------------------
 
 extern void * memset(void * destiny, int32_t c, uint64_t length);
 
@@ -129,3 +132,87 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
   }
 }
 
+enum State { RUNNING,
+            BLOCKED,
+            KILLED };
+
+typedef struct P_rq {
+int32_t pid;
+enum State state;
+} p_rq;
+
+int64_t test_processes(uint64_t argc, char *argv[]) {
+  uint8_t rq;
+  uint8_t alive = 0;
+  uint8_t action;
+  uint64_t max_processes;
+  char *argvAux[] = {0};
+
+  if (argc != 1)
+    syscall_exit();
+
+  if ((max_processes = satoi(argv[0])) <= 0)
+    syscall_exit();
+
+  p_rq p_rqs[max_processes];
+
+  //while (1) {
+
+    // Create max_processes processes
+    for (rq = 0; rq < max_processes; rq++) {
+      /* p_rqs[rq].pid = my_create_process("endless_loop", 0, argvAux); */
+      p_rqs[rq].pid = launchProcess(1,"loop",0,argvAux,0);
+      /* if (p_rqs[rq].pid == -1) {
+        printf("test_processes: ERROR creating process\n");
+        return -1;
+      } else { */
+        p_rqs[rq].state = RUNNING;
+        alive++;
+    }
+
+    // Randomly kills, blocks or unblocks processes until every one has been killed
+    while (alive > 0) {
+
+      for (rq = 0; rq < max_processes; rq++) {
+        action = GetUniform(100) % 2;
+
+        switch (action) {
+          case 0:
+            if (p_rqs[rq].state == RUNNING || p_rqs[rq].state == BLOCKED) {
+              int value = syscall_kill(p_rqs[rq].pid);
+              if (value == -1 || value == -2) {
+                printf("test_processes: ERROR killing process. Code: %d\n",value);
+                syscall_exit();
+              }
+              p_rqs[rq].state = KILLED;
+              alive--;
+            }
+            break;
+
+          case 1:
+            if (p_rqs[rq].state == RUNNING) {
+              int value2 = syscall_switchBlock(p_rqs[rq].pid);
+              if (value2 == -1 || value2 == -2) {
+                printf("test_processes: ERROR blocking process. Code: %d\n",value2);
+                syscall_exit();
+              }
+              p_rqs[rq].state = BLOCKED;
+            }
+            break;
+        }
+      }
+
+      // Randomly unblocks processes
+      for (rq = 0; rq < max_processes; rq++)
+        if (p_rqs[rq].state == BLOCKED && GetUniform(100) % 2) {
+          int value3 = syscall_switchBlock(p_rqs[rq].pid);
+          if (value3 == -1 || value3 == -2) {
+            printf("test_processes: ERROR unblocking process. Code: %d\n",value3);
+            syscall_exit();
+          }
+          p_rqs[rq].state = RUNNING;
+        }
+    }
+  //}
+  syscall_exit();
+}

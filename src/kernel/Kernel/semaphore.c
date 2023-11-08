@@ -6,10 +6,13 @@
 
 typedef int sem_type;
 
+extern void sem_lock_wait(sem_type *lock);
+extern void sem_lock_post(sem_type *lock);
+
 typedef struct Node{
     char name[MAX_LENGTH];
     sem_type * sem;
-    int lock;
+    char lock;
     int uses;
     struct Node * next;
 } Node;
@@ -107,5 +110,42 @@ int sem_close(sem_type* sem){
 //     return -1;
 // }
 
+int sem_wait(sem_type *sem){
+    Node* aux = semList;
+    while(aux != NULL && aux->sem == sem){
+        aux = aux->next;
+    }
+    if(aux == NULL){
+        return -1;
+    }
+    sem_lock_wait(&(aux->lock));
+    if(*sem == 0){
+        sem_lock_post(&(aux->lock));
+        blockSemProcess(getRunningPID(), sem);
+    }
+    //si sigo es porque se desbloqueo el proceso
+    //si se llamo a un unblock process es porque se tenia acceso exclusivo al semaforo, 
+    //asi que simplemente no libero ese acceso para que cualquier otro proceso que no sea
+    //el que se acaba de desboquear no pueda modificar el semaforo
+    *sem --;
+    sem_lock_post(&(aux->lock));
+    return 0;    
+}
 
+int sem_post(sem_type *sem){
+    Node* aux = semList;
+    while(aux != NULL && aux->sem == sem){
+        aux = aux->next;
+    }
+    if(aux == NULL){
+        return -1;
+    }
+    sem_lock_wait(&(aux->lock));
+    (*sem)++;
+    if(*sem == 1){
+        unblockSemProcess(sem);
+    }
+    //no hago un sem_lock_post porque el semaforo lo esta accediendo ahora 
+    return 0;
+}
 

@@ -16,13 +16,13 @@ typedef struct process {
     int state;
     char argc;
     char** argv;
+    void * dataMemory;
 } processType;
-
-typedef int sem_t;
 
 processType active_processes[MAX_PROCESSES+1];
 char keyboard_blocked_processes[MAX_PROCESSES];
 void * sem_blocked_processes[MAX_PROCESSES];
+static char i = 0;
 
 extern unsigned long prepare_process(void * memory, void (* process), char argc, char* argv[]);
 
@@ -40,15 +40,44 @@ void initProcesses() {
     active_processes[MAX_PROCESSES].state = exited;
 }
 
+int switchBlock(size_t pid) {
+    if(pid <= 1 || pid >= MAX_PROCESSES) return -1;
+    int state = getProcessState(pid);
+    if (state == blocked) {
+        if (active_processes[pid].alive == false)
+            return -2;
+        else
+            unblockProcess(pid);
+    } else if (state == ready) {
+        if (active_processes[pid].alive == false)
+            return -2;
+        else
+            blockProcess(pid);
+    }
+    return 0;
+}
+
+int isAlive(size_t pid) {
+    return active_processes[pid].alive;
+}
+
 void blockProcess(size_t pid) {
     setProcessState(pid, blocked);
+}
+
+void unblockProcess(size_t pid) {
+    setProcessState(pid, ready);
+}
+
+void blockKeyboardProcess(size_t pid) {
     if (pid < 0 || pid >= MAX_PROCESSES) return;
+    blockProcess(pid);
     keyboard_blocked_processes[pid] = true;
 }
 
-void blockProcessSem(size_t pid, sem_t * sem){
-    setProcessState(pid, blocked);
+void blockSemProcess(size_t pid, sem_type * sem) {
     if (pid < 0 || pid >= MAX_PROCESSES) return;
+    blockProcess(pid);
     sem_blocked_processes[pid] = sem;
 }
 
@@ -56,10 +85,24 @@ int isKBlocked(size_t pid) {
     return keyboard_blocked_processes[pid];
 }
 
-void unblockProcess(size_t pid) {
-    setProcessState(pid, ready);
+void unblockKeyboardProcess(size_t pid) {
     if (pid < 0 || pid >= MAX_PROCESSES) return;
+    unblockProcess(pid);
     keyboard_blocked_processes[pid] = false;
+}
+
+void unblockSemProcess(sem_type *sem){
+    char counter = 0;
+    while(sem_blocked_processes[i] != sem && counter < MAX_PROCESSES){
+        i = (i+1)%MAX_PROCESSES;
+        counter++;
+    }
+    if(sem_blocked_processes[i] == sem){
+        unblockProcess(i);
+        sem_blocked_processes[i] = NULL;
+    }
+    i = (i+1)%MAX_PROCESSES;
+
 }
 
 void setProcessState(size_t pid, int state) {
@@ -86,15 +129,16 @@ unsigned long getRBP(size_t pid) {
     return active_processes[pid].rbp;
 }
 
-void startProcess(int priority, void (* process), char argc, char* argv[], char foreground, char* name) {
+int startProcess(int priority, void (* process), char argc, char* argv[], char foreground, char* name) {
     _cli();
     void * processMemory = allocMemory(PAGE_SIZE);
     unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
-    processType newProcess = {name, true, rsp, ready, argc, argv};
+    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory};
     size_t pid = getFreePID();
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
     _sti();
+    return pid;
 }
 
 
@@ -104,22 +148,25 @@ void enableShell() {
 }
 
 
-void endProcess(size_t pid) {
+int endProcess(size_t pid) {
     _cli();
-    if (pid == HALT_PID || pid == SHELL_PID || pid > MAX_PROCESSES) return;
+    if (pid == HALT_PID || pid == SHELL_PID || pid > MAX_PROCESSES) return -1;
+    if (active_processes[pid].alive == false) return -2;
     active_processes[pid].alive = false;
     setProcessState(pid, exited);
     removeProcess(pid);
+    freeMemory(active_processes[pid].dataMemory);
     enableShell();
     _stint20();
+    return 0;
 }
 
 void exitProcess() {
     endProcess(getRunningPID());
 }
 
-void killProcess(size_t pid) {
-    endProcess(pid);
+int killProcess(size_t pid) {
+    return endProcess(pid);
 }
 
 void halting() {
@@ -131,7 +178,7 @@ void halting() {
 unsigned long prepareHalt() { // pid = 0 is halt
     void * haltMemory = allocMemory(HALT_PAGE);
     unsigned long haltrsp = prepare_process(haltMemory + HALT_PAGE, &halting, 1, (char**){"halt"});
-    processType haltProcess = {"halt", true, haltrsp, ready, 1, (char*){"halt"}};
+    processType haltProcess = {"halt", true, haltrsp, ready, 1, (char*){"halt"}, haltMemory};
     active_processes[HALT_PID] = haltProcess;
     return haltrsp;
 }

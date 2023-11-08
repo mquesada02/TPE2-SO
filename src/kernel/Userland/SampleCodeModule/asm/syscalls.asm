@@ -19,6 +19,8 @@ GLOBAL syscall_exit
 GLOBAL syscall_getpid
 GLOBAL syscall_kill
 GLOBAL syscall_ps
+GLOBAL syscall_switchBlock
+GLOBAL syscall_changePriority
 
 section .text
 
@@ -198,6 +200,21 @@ syscall_kill:
 syscall_ps:
 	pushf
 	mov rdi, 20
+	int 80h
+	popf
+	ret
+syscall_switchBlock:
+	pushf
+	mov rsi, rdi
+	mov rdi, 21
+	int 80h
+	popf
+	ret
+syscall_changePriority:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 23
 	int 80h
 	popf
 	ret

@@ -4,7 +4,7 @@
 
 void initProcesses();
 void printProcesses();
-void launchProcess(int priority, char* name, char argc, char* argv[], char foreground);
+int launchProcess(int priority, char* name, char argc, char* argv[], char foreground);
 void printCurrentPID();
 
 /* PROCESSES */

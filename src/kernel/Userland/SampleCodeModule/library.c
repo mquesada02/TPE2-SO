@@ -322,7 +322,8 @@ int strToNum(char * stringNum){
         i++;
     }
     while (stringNum[i]){
-        n = n*10 + (stringNum[i] - '0');
+        if (stringNum[i]>='0' && stringNum[i]<='9')
+            n = n*10 + (stringNum[i] - '0');
         i++;
     }
     n*=notNeg;

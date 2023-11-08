@@ -1,7 +1,6 @@
 #include <sys/types.h>
+#include <MemoryManager.h>
 #include <processes.h>
-
-static size_t runningPID = MAX_PROCESSES;
 
 enum state {running, ready, blocked, exited};
 
@@ -15,7 +14,9 @@ void removeProcess(size_t pid);
 
 void printProcesses();
 
-size_t getRunningPID();
+int changePriority(size_t pid, int priority);size_t getRunningPID();
+
+
 
 size_t getForegroundPID();
 

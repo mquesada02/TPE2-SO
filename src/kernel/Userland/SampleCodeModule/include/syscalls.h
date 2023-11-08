@@ -25,10 +25,12 @@ extern void syscall_drawRectangle(int x, int y, int h, int w, uint8_t color);
 extern void * syscall_allocMemory(size_t size);
 extern int syscall_freeMemory(void *data);
 extern int syscall_getMemStatus(size_t * free, size_t * occupied);
-extern void syscall_startProcess(int priority, void (* process), char argc, char* argv[], struct processStart * ps);
+extern int syscall_startProcess(int priority, void (* process), char argc, char* argv[], struct processStart * ps);
 extern void syscall_exit();
 extern size_t syscall_getpid();
-extern void syscall_kill(size_t pid);
+extern int syscall_kill(size_t pid);
 extern void syscall_ps();
+extern int syscall_switchBlock(size_t pid);
+extern int syscall_changePriority(size_t pid, int priority);
 
 #endif

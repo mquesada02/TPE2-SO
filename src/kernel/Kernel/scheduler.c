@@ -1,6 +1,4 @@
 //importante -> cambiar malloc y free por los nuestros, pero estan en userspace asi que no se :/
-#include <sys/types.h>
-#include <MemoryManager.h>
 #include <scheduler.h>
 
 #define NULL 0
@@ -9,6 +7,8 @@
 
 #define prioritiesAmount 24
 static int initialPriority = 0;
+
+size_t runningPID = MAX_PROCESSES;
 
 static size_t foregroundPID = 1; // shell pid by default
 
@@ -234,6 +234,50 @@ void stopProcess(unsigned long rsp, int state) {
                 }   
             } */
             return;
+        }
+    }
+}
+
+int changePriority(size_t pid, int priority) {
+    if (pid == HALT_PID || pid == SHELL_PID || pid > MAX_PROCESSES) return -1;
+    if (!isAlive(pid)) return -2;
+    if (priority < 1 || priority >= priorityLevels) return -3;
+    for(int i=0;i<priorityLevels;i++) {
+        Node * current = priorityQueue[i].first;
+        Node * prev = priorityQueue[i].last;
+        Node * last = priorityQueue[i].last;
+        while (current->pid != pid && current != last) {
+            current = current->next;
+            prev = prev->next;
+        }
+        if (current->pid == pid) {
+            if (priorityQueue[i].first == priorityQueue[i].last) {
+                priorityQueue[i].first = NULL;
+                priorityQueue[i].last = NULL;
+            } else {
+                if (current == priorityQueue[i].first) {
+                    priorityQueue[i].first = current->next;
+                    priorityQueue[i].last->next = priorityQueue[i].first;
+                } else if (current == priorityQueue[i].last) {
+                    priorityQueue[i].last = prev;
+                    prev->next = priorityQueue[i].first;
+                } else {
+                    // está "entre medio" del primero y el último
+                    prev->next = current->next;
+                }
+            }
+            // lo agrego a la prioridad deseada
+            Node * priorityCurrent = priorityQueue[priority].first;
+            Node * priorityLast = priorityQueue[priority].last;
+            if (priorityCurrent == NULL) {
+                priorityQueue[priority].first = current;
+                priorityQueue[priority].last = current;
+                current->next = current;
+            } else {
+                priorityQueue[priority].last->next = current;
+                current->next = priorityQueue[priority].first;
+            }
+            return 0;
         }
     }
 }

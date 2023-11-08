@@ -9,6 +9,7 @@
 #include <MemoryManager.h>
 #include <processes.h>
 #include <scheduler.h>
+//#include <semaphore.h>
 
 
 extern char buffer;
@@ -21,7 +22,7 @@ extern long int registers_space[];
  */
 static unsigned char read() {
     buffer = 0;
-    blockProcess(getRunningPID());
+    blockKeyboardProcess(getRunningPID());
     _stint20();
     //_sti();
     //__asm__("int $0x20");
@@ -122,10 +123,11 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
                 char foreground;
                 char * name;
             };
-            startProcess(param1, param2, param3, param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
+            int value = startProcess(param1, param2, param3, param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
             if(((struct processStart *)param5)->foreground) //foreground
                 setProcessState(getRunningPID(), blocked);
             _stint20();
+            return value;
             break;
         case 17:
             exitProcess();
@@ -134,10 +136,31 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             return getRunningPID();
             break;
         case 19:
-            killProcess(param1);
+            return killProcess(param1);
             break;
         case 20:
             printProcesses();
+            break;
+        case 21:
+            return switchBlock(param1);
+            break;
+        case 22:
+            
+            break;
+        case 23:
+            return changePriority(param1, param2);
+            break;
+        case 24:
+            return sem_open(param1, param2);
+            break;
+        case 25:
+            return sem_close(param1);
+            break;
+        case 26:
+            return sem_wait(param1);
+            break;
+        case 27:
+            return sem_post(param1);
             break;
 	}
 	return 0;

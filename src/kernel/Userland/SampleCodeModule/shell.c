@@ -81,9 +81,11 @@ void loadAllModules() {
     loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("mem", "Prints the memory status", &mem);
     loadModule("pid", "Prints the pid of the current process", &printPID);
-    loadModule("pstart", "Start a new process", &pstart);
-    loadModule("kill","Kill a process", &killProcess);
+    loadModule("pstart", "Start a new process given a priority and process name", &pstart);
+    loadModule("kill","Kill a process given a PID", &killProcess);
     loadModule("ps","Prints all processes", &printCurrentProcesses);
+    loadModule("block","Switch the process status between blocked and ready given a PID", &blockProcess);
+    loadModule("nice", "Change the priority of a process given a PID and a priority", &changePriority);
 }
 
 /**
@@ -112,7 +114,7 @@ void runModule(const char * input, char argc, char * params[]){
 void printHelp(char argc, char * argv[]) {
     printf("The shell's functionalities are the following:\n");
     if (argc == 0 || (argc == 1 && argv[0][0] == '1')) {
-        for(int i=0; i<2*TOTAL_MODULES/3; i++) {
+        for(int i=0; i<TOTAL_MODULES/2; i++) {
             printf("\n");
             print(" - ", GREEN);
             print(modules[i].name, GREEN);
@@ -120,7 +122,7 @@ void printHelp(char argc, char * argv[]) {
             printf(modules[i].description);
         }
     } else if (argc == 1 && argv[0][0] == '2') {
-        for(int i=2*TOTAL_MODULES/3; i<TOTAL_MODULES; i++) {
+        for(int i=TOTAL_MODULES/2; i<TOTAL_MODULES; i++) {
             printf("\n");
             print(" - ", GREEN);
             print(modules[i].name, GREEN);
@@ -244,10 +246,40 @@ void printPID() {
 }
 
 void killProcess(char argc, char * argv[]) {
-    syscall_kill(strToNum(argv[0]));
-    printf("Killed the process with PID %s.\n",argv[0]);
+    int value = syscall_kill(strToNum(argv[0]));
+    if (value == -1) {
+        printf("Invalid PID.\n");
+    } else if (value == -2) {
+        printf("Invalid PID. The process is not alive.\n");
+    } else {
+        printf("Killed the process with PID %s.\n",argv[0]);
+    }
 }
 
 void printCurrentProcesses() {
     syscall_ps();
+}
+
+void blockProcess(char argc, char * argv[]) {
+    int value = syscall_switchBlock(strToNum(argv[0]));
+    if (value == -1) {
+        printf("Invalid PID.\n");
+    } else if (value == -2) {
+        printf("Invalid PID. The process is not alive.\n");
+    } else {
+        printf("Switched the process status with PID %s.\n",argv[0]);
+    }
+}
+
+void changePriority(char argc, char * argv[]) {
+    int value = syscall_changePriority(strToNum(argv[0]), strToNum(argv[1]));
+    if (value == -1) {
+        printf("Invalid PID.\n");
+    } else if (value == -2) {
+        printf("Invalid PID. The process is not alive.\n");
+    } else if (value == -3) {
+        printf("Invalid priority. Valid priorities are 1, 2, 3 and 4.\n");
+    } else {
+        printf("Changed the priority of the process with PID %s to %s.\n",argv[0],argv[1]);
+    }
 }

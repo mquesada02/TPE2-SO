@@ -38,7 +38,7 @@ char keyboard_handler() {
 	unsigned char asciiCode = scanCodeToASCII(character);
     if (asciiCode)
         if (isKBlocked(fg))
-            unblockProcess(fg);
+            unblockKeyboardProcess(fg);
     if (ctrlActivated){
         if (asciiCode == 'c'){
             drawString("^C Killed.",0xFFFFFF,0x000000);
