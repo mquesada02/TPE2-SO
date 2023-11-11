@@ -3,6 +3,8 @@
 #include <interrupts.h>
 #include <MemoryManager.h>
 
+#include <lib.h>
+
 #define PAGE_SIZE 4096
 #define HALT_PAGE 2048
 
@@ -17,12 +19,19 @@ typedef struct process {
     char argc;
     char** argv;
     void * dataMemory;
+    size_t parentPID;
+    char childrenCount;
+    char children[MAX_PROCESSES];
+    char stdin;
+    char stdout;
 } processType;
 
 processType active_processes[MAX_PROCESSES+1];
 char keyboard_blocked_processes[MAX_PROCESSES];
+size_t waitchild_blocked_processes[MAX_PROCESSES];
 void * sem_blocked_processes[MAX_PROCESSES];
-static char i = 0;
+int fd_blocked_processes[MAX_PROCESSES];
+static char j = 0;
 
 extern unsigned long prepare_process(void * memory, void (* process), char argc, char* argv[]);
 
@@ -33,15 +42,45 @@ void initProcesses() {
         active_processes[i].state = ready;
         active_processes[i].argc = 0;
         active_processes[i].argv = NULL;
+        active_processes[i].dataMemory = NULL;
+        active_processes[i].parentPID = 0;
+        active_processes[i].stdin = 0;
+        active_processes[i].stdout = 1;
+        for (int j=0;j<MAX_PROCESSES;j++) {
+            active_processes[i].children[j] = 0;
+        }
+        active_processes[i].childrenCount = 0;
         keyboard_blocked_processes[i] = 0;
+        waitchild_blocked_processes[i] = 0;
         sem_blocked_processes[i] = NULL;
+        fd_blocked_processes[i] = -1;
     }
     active_processes[MAX_PROCESSES].alive = false;
     active_processes[MAX_PROCESSES].state = exited;
 }
 
+char getSTDIN(size_t pid) {
+    return active_processes[pid].stdin;
+}
+
+char getSTDOUT(size_t pid) {
+    return active_processes[pid].stdout;
+}
+
+void setSTDIN(size_t pid, char stdin) {
+    active_processes[pid].stdin = stdin;
+}
+
+void setSTDOUT(size_t pid, char stdout) {
+    active_processes[pid].stdout = stdout;
+}
+
+void sendEOF(int fd) {
+    /* TO-DO */
+}
+
 int switchBlock(size_t pid) {
-    if(pid <= 1 || pid >= MAX_PROCESSES) return -1;
+    if(pid <= SHELL_PID || pid >= MAX_PROCESSES) return -1;
     int state = getProcessState(pid);
     if (state == blocked) {
         if (active_processes[pid].alive == false)
@@ -57,8 +96,68 @@ int switchBlock(size_t pid) {
     return 0;
 }
 
+void addChildren(size_t parent, size_t child) {
+    active_processes[parent].children[active_processes[parent].childrenCount] = child;
+    active_processes[parent].childrenCount++;
+}
+
+void removeChildren(size_t parent, size_t child) {
+    int index = -1;
+    for(int i=0;i<active_processes[parent].childrenCount;i++) {
+        if (active_processes[parent].children[i] == child) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) return;
+    for(int i=index;i<active_processes[parent].childrenCount-1;i++) {
+        active_processes[parent].children[i] = active_processes[parent].children[i+1];
+    }
+}
+
+void waitPID(int pid) {
+    if (pid == HALT_PID || pid >= MAX_PROCESSES) return;
+    //if (active_processes[pid].alive == false) return;
+    size_t rpid = getRunningPID();
+    if (pid == -1) {
+        /* wait for children to end */
+        for(int i=0;i<active_processes[rpid].childrenCount;i++) {
+            if (active_processes[active_processes[rpid].children[i]].alive) {
+                waitchild_blocked_processes[rpid] = active_processes[rpid].children[i];
+                blockProcess(rpid);
+                _stint20();
+            }
+        }
+    } else {
+        /* wait for specific pid to end */
+        waitchild_blocked_processes[rpid] = pid;
+        blockProcess(rpid);
+        _stint20();
+    }
+    return;
+}
+
 int isAlive(size_t pid) {
     return active_processes[pid].alive;
+}
+
+int isBlocked(size_t pid) {
+    return getProcessState(pid) == blocked;
+}
+
+int isBlockedFD(size_t pid, int fd) {
+    return fd_blocked_processes[pid] == fd;
+}
+
+void blockFD(size_t pid, int fd) {
+    fd_blocked_processes[pid] = fd;
+    blockProcess(pid);
+}
+
+void unblockFD(size_t pid, int fd) {
+    if (!isBlockedFD(pid, fd)) return;
+    fd_blocked_processes[pid] = -1;
+    unblockProcess(pid);
 }
 
 void blockProcess(size_t pid) {
@@ -93,15 +192,15 @@ void unblockKeyboardProcess(size_t pid) {
 
 void unblockSemProcess(sem_type *sem){
     char counter = 0;
-    while(sem_blocked_processes[i] != sem && counter < MAX_PROCESSES){
-        i = (i+1)%MAX_PROCESSES;
+    while(sem_blocked_processes[j] != sem && counter < MAX_PROCESSES){
+        j = (j+1)%MAX_PROCESSES;
         counter++;
     }
-    if(sem_blocked_processes[i] == sem){
-        unblockProcess(i);
-        sem_blocked_processes[i] = NULL;
+    if(sem_blocked_processes[j] == sem){
+        unblockProcess(j);
+        sem_blocked_processes[j] = NULL;
     }
-    i = (i+1)%MAX_PROCESSES;
+    j = (j+1)%MAX_PROCESSES;
 
 }
 
@@ -133,10 +232,11 @@ int startProcess(int priority, void (* process), char argc, char* argv[], char f
     _cli();
     void * processMemory = allocMemory(PAGE_SIZE);
     unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
-    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory};
+    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, getSTDIN(getRunningPID()), getSTDOUT(getRunningPID())};
     size_t pid = getFreePID();
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
+    addChildren(getRunningPID(), pid);
     _sti();
     return pid;
 }
@@ -155,6 +255,13 @@ int endProcess(size_t pid) {
     active_processes[pid].alive = false;
     setProcessState(pid, exited);
     removeProcess(pid);
+    removeChildren(active_processes[pid].parentPID, pid);
+    for(int i=0;i<MAX_PROCESSES;i++) {
+        if (waitchild_blocked_processes[i] == pid) {
+            unblockProcess(i);
+            waitchild_blocked_processes[i] = 0;
+        }
+    }
     freeMemory(active_processes[pid].dataMemory);
     enableShell();
     _stint20();
@@ -178,7 +285,7 @@ void halting() {
 unsigned long prepareHalt() { // pid = 0 is halt
     void * haltMemory = allocMemory(HALT_PAGE);
     unsigned long haltrsp = prepare_process(haltMemory + HALT_PAGE, &halting, 1, (char**){"halt"});
-    processType haltProcess = {"halt", true, haltrsp, ready, 1, (char*){"halt"}, haltMemory};
+    processType haltProcess = {"halt", true, haltrsp, ready, 1, (char*){"halt"}, haltMemory, getRunningPID(), {0}, 0, 1};
     active_processes[HALT_PID] = haltProcess;
     return haltrsp;
 }

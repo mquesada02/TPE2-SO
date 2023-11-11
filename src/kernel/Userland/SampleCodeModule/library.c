@@ -2,8 +2,11 @@
 #include <library.h> 
 #include <time.h>
 
+
 #define FBCOLOR_BLACK 0x000000
 #define FGCOLOR_WHITE 0xFFFFFF
+
+
 
 // ------------------------------------- LECTURA ------------------------------------- //
 
@@ -13,7 +16,7 @@
  * @return Valor ASCII de lecuta del teclado.
  */
 int getChar(){
-    return syscall_read();
+    return syscall_read(0);
 }   
 
 char parseInput(char * input, char * command, char ** argv) {
@@ -59,7 +62,7 @@ char parseInput(char * input, char * command, char ** argv) {
 void getInput(char * buff){
     char c;
     int buffidx=0, screenptr=0;
-    while((c=getChar())!='\n') {
+    while((c=getChar())!='\n' && c != -1) {
         if (c == 127 /* DEL ASCII */ ){
             if ( buffidx!=0 ){
                 putChar(c, FGCOLOR_WHITE);

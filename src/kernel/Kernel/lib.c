@@ -1,8 +1,28 @@
 #include <stdint.h>
+#include <processes.h>
+#include <interrupts.h>
 #include <lib.h>
 
+
+typedef struct file_descriptor {
+    char fdbuff[FD_SIZE];
+    int pos;
+} fd_t;
+
+fd_t fd_table[MAX_FDS];
+
+
 extern char buffer;
-extern void _sti();
+
+
+void initFDs() {
+    for (int i=0;i<MAX_FDS;i++) {
+        fd_table[i].pos = 0;
+        for (int j=0;j<FD_SIZE;j++) {
+            fd_table[i].fdbuff[j] = 0;
+        }
+    }
+}
 
 /**
  * @brief Copia un caracter las veces deseadas sobre un puntero dado
@@ -117,16 +137,62 @@ void numToStr(int64_t num, int base, char * buffer) {
         
 }
 
+void moveFDCursor(int fd) {
+    for(int i=0;i<fd_table[fd].pos && fd_table[fd].fdbuff[i];i++) {
+        fd_table[fd].fdbuff[i] = fd_table[fd].fdbuff[i+1];
+    }
+    fd_table[fd].pos--;
+    return;
+}
+
 /**
  * @brief Retorna el valor leído de la entrada de teclado.
  * 
  * @return Valor leído de la entrada de teclado.
  */
-unsigned char read() {
-	_sti();
-	buffer = 0;
-    while (buffer == 0);
-    return buffer;
+/**
+ * @brief Retorna el valor ASCII guardado en la variable buffer que se modifica con la interrupción 21h.
+ * 
+ * @return Valor ASCII guardado en la variable buffer.
+ */
+unsigned char read(int fd) {
+    if (fd_table[fd].pos == 0) {
+        /* block process until new arrival */
+        blockFD(getRunningPID(), fd);
+        _stint20();
+    } else {
+        char toReturn = fd_table[fd].fdbuff[0]; 
+        moveFDCursor(fd);
+        return toReturn;
+    }
+    return read(fd); // cuando se desbloquea un proceso, sigue estando en 0 la posición, por lo tanto, se necesita llamar devuelta
+    
+    // if (fd == 0) {
+    //     buffer = 0;
+    //     blockKeyboardProcess(getRunningPID());
+    //     _stint20();
+    //     return buffer;
+    // } else {
+    //     /* read from fd */
+    //     
+    // }
+    
+}
+
+void writeByteFD(int fd, char c) {
+    fd_table[fd].fdbuff[fd_table[fd].pos] = c;
+    fd_table[fd].pos++;
+    return;
+}
+
+void writeFD(int fd, const char *buff) {
+    for(int i=fd_table[fd].pos;buff[i] && i<FD_SIZE;i++) {
+        fd_table[fd].fdbuff[i] = buff[i];
+        fd_table[fd].pos++;
+    }
+    if (fd_table[fd].pos == FD_SIZE) {
+        blockProcess(getRunningPID());
+    }
 }
 
 /**
@@ -134,7 +200,7 @@ unsigned char read() {
  */
 void waitForEnter(){
 	unsigned char c;
-	while((c = read()) != '\n');
+	while((c = read(0)) != '\n');
 }
 
 void strcpy(char * dest, char * src, int destSize){

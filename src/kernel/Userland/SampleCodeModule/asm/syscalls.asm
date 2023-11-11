@@ -21,11 +21,13 @@ GLOBAL syscall_kill
 GLOBAL syscall_ps
 GLOBAL syscall_switchBlock
 GLOBAL syscall_changePriority
+GLOBAL syscall_waitpid
 
 section .text
 
 syscall_read:
     pushf
+	mov rsi, rdi
     mov rdi,0      ; syscall for read
     int 80h
     popf
@@ -207,6 +209,13 @@ syscall_switchBlock:
 	pushf
 	mov rsi, rdi
 	mov rdi, 21
+	int 80h
+	popf
+	ret
+syscall_waitpid:
+	pushf
+	mov rsi, rdi
+	mov rdi, 22
 	int 80h
 	popf
 	ret

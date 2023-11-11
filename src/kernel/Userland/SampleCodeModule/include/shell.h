@@ -1,7 +1,7 @@
 #ifndef _SHELL_H_
 #define _SHELL_H_
 
-#define TOTAL_MODULES 14
+#define TOTAL_MODULES 15
 #define REGISTERS_COUNT 16
 #define DIV_BUFF_SIZE 12
 #define COMMAND_MIN_SIZE 4
@@ -24,4 +24,5 @@ void printCurrentProcesses();
 void killProcess(char argc, char * argv[]);
 void blockProcess(char argc, char * argv[]);
 void changePriority(char argc, char * argv[]);
+void looping(char argc, char* argv[]);
 #endif
