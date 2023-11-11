@@ -2,6 +2,9 @@
 #include <process.h>
 #include <library.h>
 #include <test_util.h>
+#include <stdint.h>
+#include <semLibrary.h>
+#include <philosophers.h>
 
 typedef struct process {
     char* name;
@@ -34,6 +37,7 @@ void initProcesses() {
     loadProcess("loop","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
     loadProcess("testProcesses","Test the processes functions", &test_processes);
+    loadProcess("testPhil","Test the philosophers problem", &testPhil);
 }
 
 void printProcesses() {
@@ -101,7 +105,7 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
     while (rq < MAX_BLOCKS && total < max_memory) {
       mm_rqs[rq].size = GetUniform(max_memory - total - 1) + 1;
       mm_rqs[rq].address = allocMemory(mm_rqs[rq].size);
-      //printf("Alloc'd %x\n", mm_rqs[rq].address);
+      printf("Alloc'd %x\n", mm_rqs[rq].address);
       if (mm_rqs[rq].address) {
         total += mm_rqs[rq].size;
         rq++;
@@ -127,10 +131,12 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
     for (i = 0; i < rq; i++)
       if (mm_rqs[i].address) {
         freeMemory(mm_rqs[i].address);
-        //printf("Free'd %x\n", mm_rqs[i].address);
+        printf("Free'd %x\n", mm_rqs[i].address);
       } 
   }
 }
+
+// --------------------------------------------------------------------------------------------//
 
 enum State { RUNNING,
             BLOCKED,
@@ -215,4 +221,57 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
     }
   //}
   syscall_exit();
+}
+
+// --------------------------------------------------------------------------------------------//
+
+void philosopher(uint64_t argc, char *argv[]) /* 1 parametro: número de filósofo*/
+{
+  if (argc != 1)
+    syscall_exit();
+
+  int i = satoi(argv[0]);
+
+  while(1){ /* se repite en forma indefinida */
+      printf("Philosopher %d\n", i);
+      think(); /* el filósofo está pensando */
+      take_forks(i); /* adquiere dos tenedores o se bloquea */
+      eat(); /* come espagueti */
+      leave_forks(i); /* pone de vuelta ambos tenedores en la mesa */
+  }
+}
+
+
+int createPhil(){
+  if(last_i >= N-1)
+    return -1;
+  char ** buffer = syscall_allocMemory(sizeof(char*));
+  buffer[0] = syscall_allocMemory(3*sizeof(char));
+  numToStr(last_i, 10, buffer[0]);
+  int pid = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
+  s[++last_i] = sem_open(buffer, 1);
+  return pid;
+}
+
+int removePhil(){
+  if(last_i <= 0)
+    return -1;
+  sem_close(s[last_i]);
+  last_i--;
+}
+
+void testPhil(uint64_t argc, char *argv[]) {
+    if(argc != 1)
+        syscall_exit();
+
+    int cant = satoi(argv[0]);
+
+    for(int i = 0; i < cant; i++){
+        createPhil();
+    }
+
+    while(1){
+      sleep(2);
+      printf(write_state());
+    }
 }

@@ -8,6 +8,7 @@ struct processStart {
     char foreground;
     char * name;
 };
+typedef int sem_type;
 
 extern unsigned char syscall_read();
 extern long int * syscall_getRegisters();
@@ -32,5 +33,9 @@ extern int syscall_kill(size_t pid);
 extern void syscall_ps();
 extern int syscall_switchBlock(size_t pid);
 extern int syscall_changePriority(size_t pid, int priority);
+extern sem_type * syscall_sem_open(char * name, int value);
+extern int syscall_sem_close(sem_type * sem);
+extern int syscall_sem_wait(sem_type * sem);
+extern int syscall_sem_post(sem_type * sem);
 
 #endif

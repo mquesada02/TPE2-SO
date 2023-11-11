@@ -11,9 +11,9 @@ sem_lock_wait:
     ;el runningPID es el proceso que quiere entrar al semaforo
     ;si ya esta accediendo ese mismo semaforo otro proceso, se bloquea
     mov r10, rdi
-    mov rax, 0
-    xchg rax, [rdi] 
-    cmp rax, 1
+    mov qword rbx, 0
+    xchg bl, [rdi] 
+    cmp bl, 1
     je end
     mov rsi, rdi
     call getRunningPID

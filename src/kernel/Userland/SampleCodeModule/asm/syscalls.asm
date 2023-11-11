@@ -21,6 +21,10 @@ GLOBAL syscall_kill
 GLOBAL syscall_ps
 GLOBAL syscall_switchBlock
 GLOBAL syscall_changePriority
+GLOBAL syscall_sem_open
+GLOBAL syscall_sem_close
+GLOBAL syscall_sem_wait
+GLOBAL syscall_sem_post
 
 section .text
 
@@ -197,12 +201,14 @@ syscall_kill:
 	int 80h
 	popf
 	ret
+
 syscall_ps:
 	pushf
 	mov rdi, 20
 	int 80h
 	popf
 	ret
+
 syscall_switchBlock:
 	pushf
 	mov rsi, rdi
@@ -210,11 +216,45 @@ syscall_switchBlock:
 	int 80h
 	popf
 	ret
+
 syscall_changePriority:
 	pushf
 	mov rdx, rsi
 	mov rsi, rdi
 	mov rdi, 23
+	int 80h
+	popf
+	ret
+
+syscall_sem_open:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 24
+	int 80h
+	popf
+	ret
+
+syscall_sem_close:
+	pushf
+	mov rsi, rdi
+	mov rdi, 25
+	int 80h
+	popf
+	ret
+
+syscall_sem_wait:
+	pushf
+	mov rsi, rdi
+	mov rdi, 26
+	int 80h
+	popf
+	ret
+
+syscall_sem_post:
+	pushf
+	mov rsi, rdi
+	mov rdi, 27
 	int 80h
 	popf
 	ret

@@ -2,17 +2,17 @@
 
 #define NULL (void *) 0
 #define MAX_LENGTH 30
-#define MAX_SEMS 10
+#define MAX_SEMS 40
 
 typedef int sem_type;
 
 extern void sem_lock_wait(sem_type *lock);
 extern void sem_lock_post(sem_type *lock);
 
-typedef struct Node{
+typedef struct Node{    
+    char lock;
     char name[MAX_LENGTH];
     sem_type * sem;
-    char lock;
     int uses;
     struct Node * next;
 } Node;
@@ -26,7 +26,7 @@ Node * newNode(char * name, sem_type * sem){
     Node * aux = (Node *) allocMemory(sizeof(Node));
     strcpy(aux->name, name, MAX_LENGTH);
     aux->sem = sem;
-    aux->lock = 0;
+    aux->lock = 1;
     aux->uses = 1;
     aux->next = NULL;
     return aux;

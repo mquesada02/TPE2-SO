@@ -11,3 +11,4 @@ void printCurrentPID();
 
 void testingProcess(char argc, char* argv[]);
 void infiniteProcess(char argc, char* argv[]);
+void testPhil(uint64_t argc, char *argv[]);
