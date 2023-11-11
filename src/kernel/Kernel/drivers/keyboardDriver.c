@@ -31,14 +31,16 @@ static unsigned char character;
  * 
  * @return Código ASCII correspondiente al make-code leído del mapa de entrada y salida.
  */
-char keyboard_handler() {
+void keyboard_handler() {
 	character = readScanCode();
 	checkConditions(character);
     size_t fg = getForegroundPID();
 	unsigned char asciiCode = scanCodeToASCII(character);
-    if (asciiCode)
-        if (isKBlocked(fg))
-            unblockKeyboardProcess(fg);
+    if (asciiCode) {
+        writeByteFD(getSTDIN(fg), asciiCode); // escribe en el stdin del proceso foreground
+        unblockFD(fg, getSTDIN(fg));          // desbloquea el proceso foreground si está bloqueado por ese fd
+    }
+        
     if (ctrlActivated){
         if (asciiCode == 'c'){
             drawString("^C Killed.",0xFFFFFF,0x000000);
@@ -46,8 +48,13 @@ char keyboard_handler() {
             killProcess(fg);
             return 0;
         }
+        if (asciiCode == 'd'){
+            drawString("^D EOF.",0xFFFFFF,0x000000);
+            drawNextLine();
+            sendEOF(getSTDIN(fg));
+        }
     }
-    return asciiCode;
+    return;
 }
 
 /**

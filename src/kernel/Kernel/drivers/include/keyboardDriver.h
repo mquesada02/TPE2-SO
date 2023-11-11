@@ -23,7 +23,7 @@
 #define BREAK_DOWNL_KEY DOWNL_KEY + BREAK_CODE  
 
 extern char readScanCode();
-char keyboard_handler();
+void keyboard_handler();
 unsigned char scanCodeToASCII(unsigned char scanCode);
 void checkConditions(unsigned char scanCode);
 int isLetter(unsigned char scanCode);

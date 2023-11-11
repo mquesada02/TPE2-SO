@@ -10,7 +10,7 @@ struct processStart {
 };
 typedef int sem_type;
 
-extern unsigned char syscall_read();
+extern unsigned char syscall_read(int fd);
 extern long int * syscall_getRegisters();
 extern void syscall_writeAt(unsigned char c, int x, int y, int FGColor, int BGColor);
 extern void syscall_write(unsigned char c, int FGColor, int BGColor);
@@ -33,6 +33,7 @@ extern int syscall_kill(size_t pid);
 extern void syscall_ps();
 extern int syscall_switchBlock(size_t pid);
 extern int syscall_changePriority(size_t pid, int priority);
+extern void syscall_waitpid(int pid);
 extern sem_type * syscall_sem_open(char * name, int value);
 extern int syscall_sem_close(sem_type * sem);
 extern int syscall_sem_wait(sem_type * sem);

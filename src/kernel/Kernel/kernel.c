@@ -97,6 +97,7 @@ int main() {
 	// Llamado a la Shell.
 	initPriorityQueue();
 	initProcesses();
+	initFDs();
 	
 	//_sti();
 	//_sti();

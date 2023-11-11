@@ -15,20 +15,7 @@
 extern char buffer;
 extern long int registers_space[];
 
-/**
- * @brief Retorna el valor ASCII guardado en la variable buffer que se modifica con la interrupción 21h.
- * 
- * @return Valor ASCII guardado en la variable buffer.
- */
-static unsigned char read() {
-    buffer = 0;
-    blockKeyboardProcess(getRunningPID());
-    _stint20();
-    //_sti();
-    //__asm__("int $0x20");
-    //while(buffer == 0); // corta cuando termina su quantum
-    return buffer;
-}
+
 
 /**
  * @brief Escribe sobre la pantalla un caracter con su color deseado.
@@ -48,7 +35,7 @@ static void write(unsigned char c, int FGColor, int BGColor) { drawChar(c, FGCol
  */
 void wait(int seconds){
     int initial = ticks_elapsed();
-	while ( (double) (ticks_elapsed()-initial)/18.0 < 2 );
+	while ( (double) (ticks_elapsed()-initial)/18.0 < seconds );
 }
 
 /**
@@ -63,10 +50,10 @@ void wait(int seconds){
  * @return Retorna en el caso de ser necesario, el valor de retorno de la interrupción llamada. En otro caso
  * retorna el valor 0.
  */
-long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2, uint64_t param3, uint64_t param4, uint64_t param5) {
+long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2, uint64_t param3, uint64_t param4, uint64_t param5) {
     switch (syscall) {
 		case 0:
-			return read();
+			return read(getSTDIN(getRunningPID()));
         case 1:
             if (param1==127)    
                 deleteChar();
@@ -145,7 +132,7 @@ long int syscallsDispatcher (uint64_t syscall, uint64_t param1, uint64_t param2,
             return switchBlock(param1);
             break;
         case 22:
-            
+            waitPID(param1);
             break;
         case 23:
             return changePriority(param1, param2);

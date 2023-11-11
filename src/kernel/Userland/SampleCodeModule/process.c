@@ -34,9 +34,12 @@ void loadProcess(char* name, char* description, void (* process)(char, char*[]))
 
 void initProcesses() {
     loadProcess("test","Testing process", &testingProcess);
+    loadProcess("sleep","Sleeping process", &sleepingProcess);
+    loadProcess("wait","Waiting process", &waitingProcess);
     loadProcess("loop","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
     loadProcess("testProcesses","Test the processes functions", &test_processes);
+    loadProcess("waitpid","Testing waitpid", &testWaitPID);
     loadProcess("testPhil","Test the philosophers problem", &testPhil);
 }
 
@@ -71,8 +74,7 @@ void testingProcess(char argc, char* argv[]) {
 
 void infiniteProcess(char argc, char* argv[]) {
     size_t pid = syscall_getpid();
-    printf("Infinite process started:\nPID: %d\n",pid);
-    while(1) {/* printf("PID:%d\n",pid); */};
+    while(1) {};
 }
 
 // ---------------------------------------------- TESTS ----------------------------------------------
@@ -80,6 +82,7 @@ void infiniteProcess(char argc, char* argv[]) {
 extern void * memset(void * destiny, int32_t c, uint64_t length);
 
 #define MAX_BLOCKS 128
+#define MAX_CYCLES 10
 
 typedef struct MM_rq {
   void *address;
@@ -98,7 +101,7 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
   if ((max_memory = satoi(argv[0])) <= 0)
     syscall_exit();
 
-  while(1) {
+  for(int i=0;i<MAX_CYCLES;i++) {
     rq = 0;
     total = 0;
     // Request as many blocks as we can
@@ -133,7 +136,9 @@ uint64_t test_mm(uint64_t argc, char *argv[]) {
         freeMemory(mm_rqs[i].address);
         printf("Free'd %x\n", mm_rqs[i].address);
       } 
+  //}
   }
+  syscall_exit();
 }
 
 // --------------------------------------------------------------------------------------------//
@@ -168,12 +173,13 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
     for (rq = 0; rq < max_processes; rq++) {
       /* p_rqs[rq].pid = my_create_process("endless_loop", 0, argvAux); */
       p_rqs[rq].pid = launchProcess(1,"loop",0,argvAux,0);
-      /* if (p_rqs[rq].pid == -1) {
+      if (p_rqs[rq].pid == 0 || p_rqs[rq].pid == 1) {
         printf("test_processes: ERROR creating process\n");
-        return -1;
-      } else { */
+        syscall_exit();
+      } else {
         p_rqs[rq].state = RUNNING;
         alive++;
+      }
     }
 
     // Randomly kills, blocks or unblocks processes until every one has been killed
@@ -220,6 +226,40 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
         }
     }
   //}
+  syscall_exit();
+}
+
+void testWaitPID(char argc, char* argv[]) {
+  /* recibe la cantidad de hijos que se desean esperar */
+  if (argc != 1)
+    syscall_exit();
+  int children = strToNum(argv[0]);
+  size_t children_pids[children];
+  char* timeArgv[] = {"5"};
+  for (int i=0;i<children;i++) {
+    children_pids[i] = launchProcess(1,"sleep",1,timeArgv,0);
+  }
+  printf("Waiting process started:\nPID: %d\n",syscall_getpid());
+  syscall_waitpid(-1);
+  printf("Waiting process ended:\nPID: %d\n",syscall_getpid());
+  syscall_exit();
+}
+
+void sleepingProcess(char argc, char* argv[]) {
+  if (argc != 1)
+    syscall_exit();
+  printf("Sleeping process started:\nPID: %d\n",syscall_getpid());
+  syscall_wait(strToNum(argv[0])+1);
+  printf("Sleeping process ended:\nPID: %d\n",syscall_getpid());
+  syscall_exit();
+}
+
+void waitingProcess(char argc, char* argv[]) {
+  if (argc != 1)
+    syscall_exit();
+  printf("Waiting process started:\nPID: %d\n",syscall_getpid());
+  syscall_waitpid(strToNum(argv[0]));
+  printf("Waiting process ended:\nPID: %d\n",syscall_getpid());
   syscall_exit();
 }
 

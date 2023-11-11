@@ -86,6 +86,7 @@ void loadAllModules() {
     loadModule("ps","Prints all processes", &printCurrentProcesses);
     loadModule("block","Switch the process status between blocked and ready given a PID", &blockProcess);
     loadModule("nice", "Change the priority of a process given a PID and a priority", &changePriority);
+    loadModule("loop","Periodically prints the PID asking for help.", &looping);
 }
 
 /**
@@ -282,4 +283,14 @@ void changePriority(char argc, char * argv[]) {
     } else {
         printf("Changed the priority of the process with PID %s to %s.\n",argv[0],argv[1]);
     }
+}
+
+void loop(char argc, char* argv[]) {
+    size_t pid = syscall_getpid();
+    while(1) {printf("Hey! I'm currently stuck in this infinte loop. My PID is %d if you want to help me. Please.\n",pid); syscall_wait(5);};
+}
+
+void looping(char argc, char* argv[]) {
+    char foreground = argv[argc-1][0]=='&';
+    startProcess(1, &loop, argc-(1+foreground), argv,!foreground,"loop");
 }
