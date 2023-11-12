@@ -2,6 +2,7 @@
 #include <scheduler.h>
 #include <processes.h>
 #include <videodriver.h>
+#include <lib.h>
 
 const unsigned char ascii[TOTAL_SCANCODES][2] = {
 	{  0, 0  }, { 27, 27 } , {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -37,23 +38,24 @@ void keyboard_handler() {
     size_t fg = getForegroundPID();
 	unsigned char asciiCode = scanCodeToASCII(character);
     if (asciiCode) {
+        if (ctrlActivated){
+            if (asciiCode == 'c'){
+                drawString("^C Killed.",0xFFFFFF,0x000000);
+                drawNextLine();
+                killProcess(fg);
+                return;
+            }
+            if (asciiCode == 'd'){
+                drawString("^D EOF.",0xFFFFFF,0x000000);
+                drawNextLine();
+                sendEOF(getSTDIN(fg));
+            }
+        }
         writeByteFD(getSTDIN(fg), asciiCode); // escribe en el stdin del proceso foreground
         unblockFD(fg, getSTDIN(fg));          // desbloquea el proceso foreground si está bloqueado por ese fd
     }
         
-    if (ctrlActivated){
-        if (asciiCode == 'c'){
-            drawString("^C Killed.",0xFFFFFF,0x000000);
-            drawNextLine();
-            killProcess(fg);
-            return 0;
-        }
-        if (asciiCode == 'd'){
-            drawString("^D EOF.",0xFFFFFF,0x000000);
-            drawNextLine();
-            sendEOF(getSTDIN(fg));
-        }
-    }
+    
     return;
 }
 

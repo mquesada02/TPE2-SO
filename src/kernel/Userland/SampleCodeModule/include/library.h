@@ -16,9 +16,12 @@
 #define PARAMETER_MAX_SIZE 32
 
 int getChar();
-void getInput(char * buffer);
+void getInput(char * buffer, int secure);
+int getWC();
+void catInput(char * buff);
 char parseInput(char * input, char * command, char **argv);
 long int * getRegisters();
+int getPipeIndex(char argc, char * params[]);
 
 int putCharAt(char c, int x, int y);
 int putChar(char c, int FGColor);

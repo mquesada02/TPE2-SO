@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <processes.h>
 #include <interrupts.h>
+#include <videodriver.h>
 #include <lib.h>
+#include <scheduler.h>
 
 
 typedef struct file_descriptor {
@@ -40,6 +42,30 @@ void * memset(void * destination, int32_t c, uint64_t length) {
 		dst[length] = chr;
 
 	return destination;
+}
+
+/**
+ * @brief Escribe sobre la pantalla un caracter con su color deseado.
+ * 
+ * @param c Caracter al cual se quiere escribir sobre la pantalla.
+ * @param FGColor Color del caracter deseado en el formato 0xRRGGBB, siendo RR el byte para el código de 
+ * color rojo, GG el código de color verde, y BB el código de color azul.
+ * @param BGColor Color de fondo del caracter deseado en el formato 0xRRGGBB, siendo RR el byte para el código de 
+ * color rojo, GG el código de color verde, y BB el código de color azul.
+ */
+void write(int fd, unsigned char c, int FGColor, int BGColor) {
+    if (!isOpenedFD(getRunningPID(),fd)) return;
+    if (fd == 1 && c != 255 /*-1*/) {
+        drawChar(c, FGColor, BGColor);
+    } else {
+        /* write in fd_table */
+        writeByteFD(fd, c);
+        /* unblock process waiting for that fd */
+        for(int i=1; i<MAX_PROCESSES; i++) {
+            unblockFD(i, fd);
+        }
+    }
+        
 }
 
 /**
@@ -138,12 +164,19 @@ void numToStr(int64_t num, int base, char * buffer) {
 }
 
 void moveFDCursor(int fd) {
-    for(int i=0;i<fd_table[fd].pos && fd_table[fd].fdbuff[i];i++) {
+    for(int i=0;i<fd_table[fd].pos;i++) {
         fd_table[fd].fdbuff[i] = fd_table[fd].fdbuff[i+1];
     }
     fd_table[fd].pos--;
     return;
 }
+
+void sendEOF(int fd) {
+    fd_table[fd].fdbuff[fd_table[fd].pos] = -1;
+    fd_table[fd].pos++;
+    return;
+}
+
 
 /**
  * @brief Retorna el valor leído de la entrada de teclado.
@@ -156,7 +189,7 @@ void moveFDCursor(int fd) {
  * @return Valor ASCII guardado en la variable buffer.
  */
 unsigned char read(int fd) {
-    if (fd_table[fd].pos == 0) {
+    if (!isOpenedFD(getRunningPID(), fd) || fd_table[fd].pos == 0) {
         /* block process until new arrival */
         blockFD(getRunningPID(), fd);
         _stint20();
@@ -180,6 +213,10 @@ unsigned char read(int fd) {
 }
 
 void writeByteFD(int fd, char c) {
+    if (fd_table[fd].pos == FD_SIZE) {
+        blockProcess(getRunningPID());
+        _stint20();
+    }
     fd_table[fd].fdbuff[fd_table[fd].pos] = c;
     fd_table[fd].pos++;
     return;

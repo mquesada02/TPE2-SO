@@ -8,9 +8,18 @@ struct processStart {
     char foreground;
     char * name;
 };
+
+struct processStartSTD {
+    char foreground;
+    char * name;
+    char stdin;
+    char stdout;
+};
+
+
 typedef int sem_type;
 
-extern unsigned char syscall_read(int fd);
+extern unsigned char syscall_read();
 extern long int * syscall_getRegisters();
 extern void syscall_writeAt(unsigned char c, int x, int y, int FGColor, int BGColor);
 extern void syscall_write(unsigned char c, int FGColor, int BGColor);
@@ -38,5 +47,12 @@ extern sem_type * syscall_sem_open(char * name, int value);
 extern int syscall_sem_close(sem_type * sem);
 extern int syscall_sem_wait(sem_type * sem);
 extern int syscall_sem_post(sem_type * sem);
-
+void syscall_dupstdin(size_t pid, char stdin);
+void syscall_dupstdout(size_t pid, char stdin);
+void syscall_open(size_t pid, int fd);
+void syscall_close(size_t pid, int fd);
+int syscall_pipe(int fds[2]);
+int syscall_getstdin();
+int syscall_getstdout();
+int syscall_pipeProcess(int priority, void (* process), char argc, char* argv[], struct processStartSTD * ps);
 #endif

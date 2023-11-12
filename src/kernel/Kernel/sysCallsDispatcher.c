@@ -9,6 +9,7 @@
 #include <MemoryManager.h>
 #include <processes.h>
 #include <scheduler.h>
+#include <pipe.h>
 //#include <semaphore.h>
 
 
@@ -17,16 +18,7 @@ extern long int registers_space[];
 
 
 
-/**
- * @brief Escribe sobre la pantalla un caracter con su color deseado.
- * 
- * @param c Caracter al cual se quiere escribir sobre la pantalla.
- * @param FGColor Color del caracter deseado en el formato 0xRRGGBB, siendo RR el byte para el código de 
- * color rojo, GG el código de color verde, y BB el código de color azul.
- * @param BGColor Color de fondo del caracter deseado en el formato 0xRRGGBB, siendo RR el byte para el código de 
- * color rojo, GG el código de color verde, y BB el código de color azul.
- */
-static void write(unsigned char c, int FGColor, int BGColor) { drawChar(c, FGColor, BGColor);}
+
 
 /**
  * @brief Función que espera al transcurso de los segundos deseados que se reciben como parámetro.
@@ -53,12 +45,12 @@ void wait(int seconds){
 long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2, uint64_t param3, uint64_t param4, uint64_t param5) {
     switch (syscall) {
 		case 0:
-			return read(getSTDIN(getRunningPID()));
+			return read(/* param1*/ getSTDIN(getRunningPID()) );
         case 1:
             if (param1==127)    
                 deleteChar();
             else
-                write(param1, param2, param3);
+                write(getSTDOUT(getRunningPID()), param1, param2, param3);
             break;
         case 2:
             drawNextLine();
@@ -149,6 +141,36 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
         case 27:
             return sem_post(param1);
             break;
+        case 28:
+            setSTDIN(param1, param2);
+            break;
+        case 29:
+            setSTDOUT(param1, param2);
+            break;
+        case 30:
+            openFD(param1, param2);
+            break;
+        case 31:
+            closeFD(param1, param2);
+            break;
+        case 32:
+            return pipe(param1);
+            break;
+        case 33: 
+            return getSTDIN(getRunningPID());
+            break;
+        case 34:
+            return getSTDOUT(getRunningPID());
+            break;
+        case 35:
+            struct processStartSTD {
+                char foreground;
+                char * name;
+                char stdin;
+                char stdout;
+            };
+            return pipeProcess(param1, param2, param3, param4, ((struct processStartSTD *)param5)->foreground, ((struct processStartSTD *)param5)->name, ((struct processStartSTD *)param5)->stdin, ((struct processStartSTD *)param5)->stdout);
+
 	}
 	return 0;
 }

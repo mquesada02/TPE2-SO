@@ -6,6 +6,7 @@
 #include <syscalls.h>
 #include <process.h>
 
+
 #define NULL (void*) 0
 
 extern void invalidOperation();
@@ -43,12 +44,14 @@ void startShell() {
     }
     char command[COMMAND_MAX_SIZE];
     char argc;
+    char pipeIndex;
     while(1){
         printf("\n");
         print("$ ", BLUE);
-        getInput(input);
+        getInput(input, 0);
         argc = parseInput(input, command, params);
-        runModule(command,argc,params);
+        pipeIndex = getPipeIndex(argc, params);
+        runModulePipe(command,argc,params,pipeIndex);
     }
 }
 
@@ -104,6 +107,33 @@ void runModule(const char * input, char argc, char * params[]){
         }
     }
     printf("Invalid functionality: for a list of available functionalities type 'help'");
+    return;
+}
+
+void runModulePipe(const char * input, char argc, char * params[], int pipeIndex) {
+    if (pipeIndex == -1 || strcmp(input,"pstart") == 0) {
+        runModule(input,argc,params);
+        return;
+    }
+    /* el comando es pstart */
+    int fds[2];
+    int pipe = syscall_pipe(fds);
+    if (pipe == -1) {
+        printf("Error creating pipe.\n");
+        return;
+    }
+    //(params+pipeIndex+1)[argc-(pipeIndex+1)] = "&"; // al segundo proceso lo mando al bg siempre
+    pstartPipe(argc-(pipeIndex+1)/* +1 */, params+(pipeIndex+1), fds[0], 1);
+    pstartPipe(pipeIndex, params, 0, fds[0]);
+    
+
+    /* int pid1 = pstart(pipeIndex, params);
+    syscall_open(pid1, fds[1]);
+    syscall_dupstdout(pid1, fds[1]);
+    int pid2 = pstart(argc-(pipeIndex+1), params+(pipeIndex+1));
+    syscall_open(pid2, fds[0]);
+    syscall_dupstdin(pid2, fds[0]);
+     */
     return;
 }
 
@@ -183,10 +213,10 @@ void divide() {
     char quotientStr[DIV_BUFF_SIZE];
     char remainderStr[DIV_BUFF_SIZE];
     printf("Insert a number: ");
-    getInput(numberStr);
+    getInput(numberStr, 0);
     printf("\n");
     printf("Insert a divisor: ");
-    getInput(divisorStr);
+    getInput(divisorStr, 0);
     int number = strToNum(numberStr);
     int divisor = strToNum(divisorStr);
     int quotient = number/divisor; 
@@ -224,7 +254,7 @@ void mem() {
     printMemStatus();
 }
 
-void pstart(char argc, char * argv[]) {
+int pstartPipe(char argc, char * argv[], char stdin, char stdout) {
     if (strcmp(argv[0],"-a")) {
         printProcesses();
         return;
@@ -239,7 +269,25 @@ void pstart(char argc, char * argv[]) {
         return;
     }
     char foreground = argv[argc-1][0]=='&';
-    launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
+    return launchPipeProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground, stdin, stdout);
+}
+
+int pstart(char argc, char * argv[]) {
+    if (strcmp(argv[0],"-a")) {
+        printProcesses();
+        return;
+    }
+    if (argc < 2) {
+        printf("Usage: pstart <priority> <process> [args]\n To get available processes, type 'pstart -a'\n");
+        return;
+    }
+    int priority = strToNum(argv[0]);
+    if (priority < 1 || priority > 4) {
+        printf("Invalid priority. Valid priorities are 1, 2, 3 and 4.\n");
+        return;
+    }
+    char foreground = argv[argc-1][0]=='&';
+    return launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
 }
 
 void printPID() {

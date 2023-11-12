@@ -24,6 +24,17 @@ int startProcess(int priority, void (* process)(char, char*[]), char argc, char*
     return value;
 }
 
+int pipeProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name, char stdin, char stdout) {
+  struct processStartSTD * ps = allocMemory(sizeof(struct processStartSTD));
+  ps->foreground = foreground;
+  ps->name = name;
+  ps->stdin = stdin;
+  ps->stdout = stdout;
+  int value = syscall_pipeProcess(priority, process, argc, argv, ps);
+  freeMemory(ps);
+  return value;
+}
+
 void loadProcess(char* name, char* description, void (* process)(char, char*[])) {
     processes[processesCount].name = name;
     processes[processesCount].description = description;
@@ -38,10 +49,15 @@ void initProcesses() {
     loadProcess("wait","Waiting process", &waitingProcess);
     loadProcess("loop","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
-    loadProcess("testProcesses","Test the processes functions", &test_processes);
     loadProcess("waitpid","Testing waitpid", &testWaitPID);
+    loadProcess("testProcesses","Test the processes functions", &test_processes);
     loadProcess("testPhil","Test the philosophers problem", &testPhil);
+    loadProcess("testPipes","Test the pipes", &testPipes);
+    loadProcess("pipeSender","Pipe sender for testing the pipes", &pipeSender);
+    loadProcess("cat","Prints the content of standard input", &cat);
+    loadProcess("wc","Prints the number of lines of standard input", &wordcount);
 }
+
 
 void printProcesses() {
     printf("All processes:\n");
@@ -59,11 +75,21 @@ int launchProcess(int priority, char* name, char argc, char* argv[], char foregr
     printf("No process with name '%s' found\n",name);
 }
 
+int launchPipeProcess(int priority, char* name, char argc, char* argv[], char foreground, char stdin, char stdout) {
+    for(int i=0;i<processesCount;i++) {
+        if (strcmp(processes[i].name,name)) {
+            return pipeProcess(priority, processes[i].process, argc, argv, foreground, processes[i].name, stdin, stdout);
+        }
+    }
+    printf("No process with name '%s' found\n",name);
+}
+
 void printCurrentPID() {
     printf("Current PID: %d\n",syscall_getpid());
 }
 
 void testingProcess(char argc, char* argv[]) {
+
     printf("Testing process started:\nargc: %d\nPID: %d\n",argc,syscall_getpid());
     
     for(int i=0;i<argc;i++) {
@@ -314,4 +340,32 @@ void testPhil(uint64_t argc, char *argv[]) {
       sleep(2);
       printf(write_state());
     }
+}
+
+void pipeSender(char argc, char * argv[]) {
+  while(1) {
+    printf("Message sent from PID %d!\n",syscall_getpid());
+    sleep(5);
+  }
+}
+
+void testPipes(char argc, char * argv[]) {
+  char buffer[128];
+  while(1) {
+    getInput(buffer, 1);
+    printf("\nPID %d Input: %s\n",syscall_getpid(), buffer);
+  }
+}
+
+void cat(char argc, char* argv[]) {
+    char buffer[128];
+    while(1) {
+        catInput(buffer);
+        printf("%s\n",buffer);
+    }
+}
+
+void wordcount(char argc, char* argv[]) {
+  printf("Number of lines: %d", getWC());
+  syscall_exit();
 }
