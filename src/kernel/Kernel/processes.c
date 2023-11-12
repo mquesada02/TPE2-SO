@@ -30,8 +30,17 @@ processType active_processes[MAX_PROCESSES+1];
 char keyboard_blocked_processes[MAX_PROCESSES];
 size_t waitchild_blocked_processes[MAX_PROCESSES];
 void * sem_blocked_processes[MAX_PROCESSES];
+char waiting_sem_locked[MAX_PROCESSES];
 int fd_blocked_processes[MAX_PROCESSES];
 static char j = 0;
+
+int testPhilPID = -1;
+int getTestPhilPID() {
+    return testPhilPID;
+}
+void setTestPhilPID(int pid) {
+    testPhilPID = pid;
+}
 
 extern unsigned long prepare_process(void * memory, void (* process), char argc, char* argv[]);
 
@@ -53,6 +62,7 @@ void initProcesses() {
         keyboard_blocked_processes[i] = 0;
         waitchild_blocked_processes[i] = 0;
         sem_blocked_processes[i] = NULL;
+        waiting_sem_locked[i] = 0;
         fd_blocked_processes[i] = -1;
     }
     active_processes[MAX_PROCESSES].alive = false;
@@ -125,14 +135,12 @@ void waitPID(int pid) {
             if (active_processes[active_processes[rpid].children[i]].alive) {
                 waitchild_blocked_processes[rpid] = active_processes[rpid].children[i];
                 blockProcess(rpid);
-                _stint20();
             }
         }
     } else {
         /* wait for specific pid to end */
         waitchild_blocked_processes[rpid] = pid;
         blockProcess(rpid);
-        _stint20();
     }
     return;
 }
@@ -162,6 +170,7 @@ void unblockFD(size_t pid, int fd) {
 
 void blockProcess(size_t pid) {
     setProcessState(pid, blocked);
+    _stint20();
 }
 
 void unblockProcess(size_t pid) {
@@ -174,10 +183,11 @@ void blockKeyboardProcess(size_t pid) {
     keyboard_blocked_processes[pid] = true;
 }
 
-void blockSemProcess(size_t pid, sem_type * sem) {
+void blockSemProcess(size_t pid, sem_type * sem, char waiting_locked) {
     if (pid < 0 || pid >= MAX_PROCESSES) return;
     blockProcess(pid);
     sem_blocked_processes[pid] = sem;
+    waiting_sem_locked[pid] = waiting_locked;
 }
 
 int isKBlocked(size_t pid) {
@@ -190,18 +200,23 @@ void unblockKeyboardProcess(size_t pid) {
     keyboard_blocked_processes[pid] = false;
 }
 
-void unblockSemProcess(sem_type *sem){
+int unblockSemProcess(sem_type *sem, char waiting_locked){
     char counter = 0;
-    while(sem_blocked_processes[j] != sem && counter < MAX_PROCESSES){
+    while(counter < MAX_PROCESSES){
+        if(sem_blocked_processes[j] == sem && waiting_sem_locked[j] == waiting_locked)
+            break;
         j = (j+1)%MAX_PROCESSES;
         counter++;
     }
     if(sem_blocked_processes[j] == sem){
         unblockProcess(j);
         sem_blocked_processes[j] = NULL;
+        waiting_sem_locked[j] = 0;
+        j = (j+1)%MAX_PROCESSES;
+        return true;
     }
-    j = (j+1)%MAX_PROCESSES;
-
+    //si no habia ningun proceso bloqueado con ese semaforo
+    return false;
 }
 
 void setProcessState(size_t pid, int state) {
@@ -237,6 +252,9 @@ int startProcess(int priority, void (* process), char argc, char* argv[], char f
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
     addChildren(getRunningPID(), pid);
+    if(name == "testPhil"){
+        setTestPhilPID(pid);
+    }
     _sti();
     return pid;
 }
@@ -263,7 +281,13 @@ int endProcess(size_t pid) {
         }
     }
     freeMemory(active_processes[pid].dataMemory);
-    enableShell();
+    if(pid == getTestPhilPID()){
+        setTestPhilPID(-1);
+
+    }
+    if(active_processes[pid].name != "philosopher"){
+        enableShell();
+    }
     _stint20();
     return 0;
 }
@@ -289,5 +313,7 @@ unsigned long prepareHalt() { // pid = 0 is halt
     active_processes[HALT_PID] = haltProcess;
     return haltrsp;
 }
+
+//---------------------------philosophers--------------------------------
 
 

@@ -5,6 +5,7 @@
 #include <MemoryManagerADT.h>
 #include <syscalls.h>
 #include <process.h>
+#include <philosophers.h>
 
 #define NULL (void*) 0
 
@@ -87,7 +88,8 @@ void loadAllModules() {
     loadModule("block","Switch the process status between blocked and ready given a PID", &blockProcess);
     loadModule("nice", "Change the priority of a process given a PID and a priority", &changePriority);
     loadModule("loop","Periodically prints the PID asking for help.", &looping);
-}
+    loadModule("phylo","Starts the philosophers problem and periodically prints the state of the table", &phylo);
+}   
 
 /**
  * @brief Función que llama al módulo correspondiente dependiendo del parámetro ingresado. En caso de
@@ -293,4 +295,35 @@ void loop(char argc, char* argv[]) {
 void looping(char argc, char* argv[]) {
     char foreground = argv[argc-1][0]=='&';
     startProcess(1, &loop, argc-(1+foreground), argv,!foreground,"loop");
+}
+
+//-------philosophers----------------------------------------------
+
+void testPhil(uint64_t argc, char *argv[]) {
+    if(argc != 1){
+      printf("Invalid number of arguments: must provide initial number of philosophers\n");
+      syscall_exit();
+    }
+
+    int cant = satoi(argv[0]);
+
+    if(cant<2 || cant>N){
+      printf("Invalid number of philosophers: must be between 2 and %d\n", N);
+      syscall_exit();
+    }
+
+    mutex = sem_open("mutex_phil", 1);
+    for(int i = 0; i < cant; i++){
+        createPhil();
+    }
+    while(1);
+    // while(1){
+    //   write_state();
+    //   sleep(3);
+    // }
+}
+
+void phylo(char argc, char* argv[]) {
+    char foreground = argv[argc-1][0]=='&';
+    startProcess(1, &testPhil, argc-(foreground), argv, !foreground, "testPhil");
 }

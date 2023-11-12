@@ -1,5 +1,6 @@
 #include <syscalls.h>
 #include <process.h>
+#include <processExp.h>
 #include <library.h>
 #include <test_util.h>
 #include <stdint.h>
@@ -40,7 +41,6 @@ void initProcesses() {
     loadProcess("testMem","Memory testing process", &test_mm);
     loadProcess("testProcesses","Test the processes functions", &test_processes);
     loadProcess("waitpid","Testing waitpid", &testWaitPID);
-    loadProcess("testPhil","Test the philosophers problem", &testPhil);
 }
 
 void printProcesses() {
@@ -273,45 +273,60 @@ void philosopher(uint64_t argc, char *argv[]) /* 1 parametro: número de filóso
   int i = satoi(argv[0]);
 
   while(1){ /* se repite en forma indefinida */
-      printf("Philosopher %d\n", i);
-      think(); /* el filósofo está pensando */
-      take_forks(i); /* adquiere dos tenedores o se bloquea */
-      eat(); /* come espagueti */
-      leave_forks(i); /* pone de vuelta ambos tenedores en la mesa */
+    think(i); /* el filósofo está pensando */
+    take_forks(i); /* adquiere dos tenedores o se bloquea */
+    eat(); /* come espagueti */
+    leave_forks(i); /* pone de vuelta ambos tenedores en la mesa */
   }
 }
 
 
-int createPhil(){
-  if(last_i >= N-1)
-    return -1;
+void createPhil(){
+  if(last_i >= N)
+    return;
   char ** buffer = syscall_allocMemory(sizeof(char*));
   buffer[0] = syscall_allocMemory(3*sizeof(char));
   numToStr(last_i, 10, buffer[0]);
-  int pid = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
-  s[++last_i] = sem_open(buffer, 1);
-  return pid;
+
+  char aux[7] = {'p', 'h', 'i', 'l'};
+  state[last_i] = THINKING;
+  aux[4] = buffer[0][0];
+  aux[5] = buffer[0][1];
+  aux[6] = '\0';
+  s[last_i] = sem_open(aux, 1);
+
+  philosopherPIDs[last_i] = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
+  last_i++;
+  syscall_freeMemory(buffer[0]);
+  syscall_freeMemory(buffer);
 }
 
-int removePhil(){
-  if(last_i <= 0)
-    return -1;
-  sem_close(s[last_i]);
+void removePhil(){
+  if(last_i <= 2)
+    return;
   last_i--;
+  syscall_kill(philosopherPIDs[last_i]);
+  sem_close(s[last_i]);
 }
 
-void testPhil(uint64_t argc, char *argv[]) {
-    if(argc != 1)
-        syscall_exit();
-
-    int cant = satoi(argv[0]);
-
-    for(int i = 0; i < cant; i++){
-        createPhil();
+void kill_philosophers(){
+    for (int i = 0; i < last_i; i++){
+        sem_close(s[i]);
+        syscall_kill(philosopherPIDs[i]);
     }
-
-    while(1){
-      sleep(2);
-      printf(write_state());
-    }
+    last_i = 0;
+    sem_close(mutex);
 }
+
+/*int createPhil(){
+  if(last_i >= N)
+    return -1;
+  char * param[1];
+  char buffer[3];
+  numToStr(last_i, 10, buffer);
+  param[0] = buffer;
+  int pid = startProcess(2, &philosopher, 1, param, 0, "philosopher");
+  s[last_i] = sem_open(buffer, 1);
+  last_i++;
+  return pid;
+}*/

@@ -121,7 +121,7 @@ int sem_wait(sem_type *sem){
     sem_lock_wait(&(aux->lock));
     if(*sem == 0){
         sem_lock_post(&(aux->lock));
-        blockSemProcess(getRunningPID(), sem);
+        blockSemProcess(getRunningPID(), sem, 0);
     }
     //si sigo es porque se desbloqueo el proceso
     //si se llamo a un unblock process es porque se tenia acceso exclusivo al semaforo, 
@@ -142,10 +142,12 @@ int sem_post(sem_type *sem){
     }
     sem_lock_wait(&(aux->lock));
     (*sem)++;
-    if(*sem == 1){
-        unblockSemProcess(sem);
+    if(unblockSemProcess(sem, 0)){
+        //no hago un sem_lock_post porque el semaforo lo esta accediendo ahora el proceso que se desbloqueo
+        return 0;
     }
-    //no hago un sem_lock_post porque el semaforo lo esta accediendo ahora 
-    return 0;
+    //si no habia nungun proceso esperando a ese semaforo
+    sem_lock_post(&(aux->lock));
+    return 0; 
 }
 

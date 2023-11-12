@@ -15,9 +15,10 @@ sem_lock_wait:
     xchg bl, [rdi] 
     cmp bl, 1
     je end
-    mov rsi, rdi
     call getRunningPID
-    mov rdi, rax
+    mov rdx, 1 ;lo que esta esperando es el lock, no el semaforo en si -> waiting_locked = 1
+    mov rsi, rdi ;el semaforo
+    mov rdi, rax ;el runningPID
     call blockSemProcess
     mov rdi, r10
     jmp sem_lock_wait
@@ -27,8 +28,9 @@ end:
 
 sem_lock_post:
     ;en rdi esta el lock
-    mov dword [rdi], 0
+    mov byte [rdi], 1
     call getRunningPID
+    mov rsi, 1 ; waiting_locked = 1 -> que se desbloquee a los que estan esperando el lock y no el semaforo en si
     mov rdi, rax
     call unblockSemProcess
 

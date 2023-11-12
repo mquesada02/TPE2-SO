@@ -2,6 +2,7 @@
 #include <scheduler.h>
 #include <processes.h>
 #include <videodriver.h>
+#include "../../Userland/SampleCodeModule/include/processExp.h"
 
 const unsigned char ascii[TOTAL_SCANCODES][2] = {
 	{  0, 0  }, { 27, 27 } , {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -40,11 +41,23 @@ void keyboard_handler() {
         writeByteFD(getSTDIN(fg), asciiCode); // escribe en el stdin del proceso foreground
         unblockFD(fg, getSTDIN(fg));          // desbloquea el proceso foreground si está bloqueado por ese fd
     }
+
+    if (fg == getTestPhilPID()){
+        if (asciiCode == 'a'){
+            createPhil();
+        }
+        if (asciiCode == 'r'){
+            removePhil();
+        }
+    }
         
     if (ctrlActivated){
         if (asciiCode == 'c'){
             drawString("^C Killed.",0xFFFFFF,0x000000);
             drawNextLine();
+            if (fg==getTestPhilPID()){
+                kill_philosophers();
+            }
             killProcess(fg);
             return 0;
         }
