@@ -6,6 +6,7 @@
 #include <syscalls.h>
 #include <process.h>
 
+
 #define NULL (void*) 0
 
 extern void invalidOperation();
@@ -43,12 +44,14 @@ void startShell() {
     }
     char command[COMMAND_MAX_SIZE];
     char argc;
+    char pipeIndex;
     while(1){
         printf("\n");
         print("$ ", BLUE);
-        getInput(input);
+        getInput(input, 0);
         argc = parseInput(input, command, params);
-        runModule(command,argc,params);
+        pipeIndex = getPipeIndex(argc, params);
+        runModulePipe(command,argc,params,pipeIndex);
     }
 }
 
@@ -77,7 +80,7 @@ void loadAllModules() {
     loadModule("divide", "Asks for two numbers and prints the result of dividing one by the other", &divide);
     //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
-    loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
+    //loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("mem", "Prints the memory status", &mem);
     loadModule("pid", "Prints the pid of the current process", &printPID);
@@ -86,7 +89,10 @@ void loadAllModules() {
     loadModule("ps","Prints all processes", &printCurrentProcesses);
     loadModule("block","Switch the process status between blocked and ready given a PID", &blockProcess);
     loadModule("nice", "Change the priority of a process given a PID and a priority", &changePriority);
-    loadModule("loop","Periodically prints the PID asking for help.", &looping);
+    loadModule("loop","Periodically prints the PID asking for help", &loopProcess);
+    loadModule("cat", "Alias for pstart 1 cat", &catProcess);
+    loadModule("wc", "Alias for pstart 1 wc", &wcProcess);
+    loadModule("filter", "Alias for pstart 1 filter", &filterProcess);
     loadModule("phylo","Starts the philosophers problem and periodically prints the state of the table", &phylo);
 }   
 
@@ -105,6 +111,90 @@ void runModule(const char * input, char argc, char * params[]){
         }
     }
     printf("Invalid functionality: for a list of available functionalities type 'help'");
+    return;
+}
+
+void runProcessAliasPipe(const char * input, char argc, char * params[]) {
+    /* input: process name for pstart */
+    char* command = "pstart";
+    char ** argv = syscall_allocMemory(MAX_PARAMETERS*sizeof(char*));
+    argv[0] = "1";
+    argv[1] = input;
+    int pipeIndex = getPipeIndex(argc, params);
+    if (pipeIndex != -1) {
+
+        int fds[2];
+        int pipe = syscall_pipe(fds);
+        if (pipe == -1) {
+            printf("Error creating pipe.\n");
+            return;
+        }
+
+        for(int i=2;i<pipeIndex+2;i++) {
+            argv[i] = params[i-2];
+        }        
+        pstartPipe(pipeIndex+2, argv, 0, fds[0]);
+        argv+=(pipeIndex+2)+1;
+        params+=pipeIndex+1;
+        argv[0] = "1";
+        for (int i=1; i<argc-(pipeIndex+1)+1; i++) {
+            argv[i] = params[i-1];
+        }
+        argv[argc-(pipeIndex+1)+1] = "*";
+        argv[argc-(pipeIndex+1)+2] = "&";
+        pstartPipe(argc-(pipeIndex+1)+3, argv, fds[0], 1);
+        return;
+    } else {
+        pstart(argc+2, argv);
+        return;
+    }
+
+}
+
+void catProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("cat", argc, argv);
+    return;
+}
+
+void wcProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("wc", argc, argv);
+    return;
+}
+
+void filterProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("filter", argc, argv);
+    return;
+}
+
+void loopProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("loop", argc, argv);
+    return;
+}
+
+void runModulePipe(const char * input, char argc, char * params[], int pipeIndex) {
+    if (pipeIndex == -1 || strcmp(input,"pstart") == 0) {
+        runModule(input,argc,params);
+        return;
+    }
+    /* el comando es pstart */
+    int fds[2];
+    int pipe = syscall_pipe(fds);
+    if (pipe == -1) {
+        printf("Error creating pipe.\n");
+        return;
+    }
+    (params+pipeIndex+1)[argc-(pipeIndex+1)] = "&"; // al segundo proceso lo mando al bg siempre
+    pstartPipe(argc-(pipeIndex+1)+1, params+(pipeIndex+1), fds[0], 1);
+    pstartPipe(pipeIndex, params, 0, fds[0]);
+    
+
+    /* int pid1 = pstart(pipeIndex, params);
+    syscall_open(pid1, fds[1]);
+    syscall_dupstdout(pid1, fds[1]);
+    int pid2 = pstart(argc-(pipeIndex+1), params+(pipeIndex+1));
+    syscall_open(pid2, fds[0]);
+    syscall_dupstdin(pid2, fds[0]);
+     */
     return;
 }
 
@@ -184,10 +274,10 @@ void divide() {
     char quotientStr[DIV_BUFF_SIZE];
     char remainderStr[DIV_BUFF_SIZE];
     printf("Insert a number: ");
-    getInput(numberStr);
+    getInput(numberStr, 0);
     printf("\n");
     printf("Insert a divisor: ");
-    getInput(divisorStr);
+    getInput(divisorStr, 0);
     int number = strToNum(numberStr);
     int divisor = strToNum(divisorStr);
     int quotient = number/divisor; 
@@ -225,7 +315,7 @@ void mem() {
     printMemStatus();
 }
 
-void pstart(char argc, char * argv[]) {
+int pstartPipe(char argc, char * argv[], char stdin, char stdout) {
     if (strcmp(argv[0],"-a")) {
         printProcesses();
         return;
@@ -240,8 +330,27 @@ void pstart(char argc, char * argv[]) {
         return;
     }
     char foreground = argv[argc-1][0]=='&';
-    launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
+    return launchPipeProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground, stdin, stdout);
 }
+
+int pstart(char argc, char * argv[]) {
+    if (strcmp(argv[0],"-a")) {
+        printProcesses();
+        return;
+    }
+    if (argc < 2) {
+        printf("Usage: pstart <priority> <process> [args]\n To get available processes, type 'pstart -a'\n");
+        return;
+    }
+    int priority = strToNum(argv[0]);
+    if (priority < 1 || priority > 4) {
+        printf("Invalid priority. Valid priorities are 1, 2, 3 and 4.\n");
+        return;
+    }
+    char foreground = argv[argc-1][0]=='&';
+    return launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
+}
+
 
 void printPID() {
     printCurrentPID();
@@ -286,15 +395,6 @@ void changePriority(char argc, char * argv[]) {
     }
 }
 
-void loop(char argc, char* argv[]) {
-    size_t pid = syscall_getpid();
-    while(1) {printf("Hey! I'm currently stuck in this infinte loop. My PID is %d if you want to help me. Please.\n",pid); syscall_wait(5);};
-}
-
-void looping(char argc, char* argv[]) {
-    char foreground = argv[argc-1][0]=='&';
-    startProcess(1, &loop, argc-(1+foreground), argv,!foreground,"loop");
-}
 
 //-------philosophers----------------------------------------------
 #define N 25 /* número mäximo de filósofos */

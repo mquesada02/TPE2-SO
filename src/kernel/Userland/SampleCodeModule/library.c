@@ -16,8 +16,18 @@
  * @return Valor ASCII de lecuta del teclado.
  */
 int getChar(){
-    return syscall_read(0);
+    return syscall_read();
 }   
+
+char * strcat(char *dest, const char *src) {
+    char *rdest = dest;
+
+    while (*dest)
+      dest++;
+    while (*dest++ = *src++)
+      ;
+    return rdest;
+}
 
 char parseInput(char * input, char * command, char ** argv) {
     int inputIndex = 0;
@@ -52,6 +62,16 @@ char parseInput(char * input, char * command, char ** argv) {
     return argCount;
 }
 
+int getPipeIndex(char argc, char * params[]) {
+    for (int i = 0; i < argc; i++) {
+        if (params[i][0] == '|') {
+            return i;
+        }
+    }
+    return -1;
+
+}
+
 /**
  * @brief Escribe sobre la cadena de caracteres recibida como parámetro las teclas ingresadas por el usuario
  * hasta un máximo de COMMAND_MAX_SIZE caracteres o hasta recibir el caracter de salto de línea.
@@ -59,25 +79,119 @@ char parseInput(char * input, char * command, char ** argv) {
  * 
  * @param buff Cadena de caracteres a modificar por el usuario.
  */
-void getInput(char * buff){
+void getInput(char * buff, int secure){
     char c;
     int buffidx=0, screenptr=0;
     while((c=getChar())!='\n' && c != -1) {
         if (c == 127 /* DEL ASCII */ ){
             if ( buffidx!=0 ){
-                putChar(c, FGCOLOR_WHITE);
+                if (!secure)
+                    putCharOnScreen(c);
                 if ( buffidx >= screenptr-- )
                     buffidx--;
             }
         } else {
-            putChar(c, FGCOLOR_WHITE);            
+            if (!secure)
+                putCharOnScreen(c);            
             if (buffidx < COMMAND_MAX_SIZE) {
                 buff[buffidx++] = c;
             }
             screenptr++;
         }
-    }  
-    buff[buffidx] = '\0';
+    }
+    if (c == -1)
+        syscall_exit();  
+    buff[buffidx++] = '\0';
+}
+
+int getWC(int secure){
+    char c;
+    int nl = 0;
+    int screenptr=0;
+    while((c=getChar())!=-1) {
+        if (c == 127 /* DEL ASCII */ ){
+            if ( screenptr!=0 ){
+                if (!secure)
+                    putCharOnScreen(c);            
+                screenptr--;
+            }
+        } else if (c == '\n') {
+            nl++;
+            screenptr = 0;
+            syscall_nextLine();
+        } else {
+                if(!secure)
+                    putCharOnScreen(c);            
+            screenptr++;
+        }
+    }
+    putChar(c,FGCOLOR_WHITE);
+
+    return nl; 
+}
+
+void catInput(char * buff, int secure){
+    char c;
+    int buffidx=0, screenptr=0;
+    while((c=getChar())!=-1 && c != '\n') {
+        if (c == 127 /* DEL ASCII */ ){
+            if ( buffidx!=0 ){
+                    if(!secure)
+                        putCharOnScreen(c);            
+                if ( buffidx >= screenptr-- )
+                    buffidx--;
+            }
+        } else {
+                if(!secure)
+                    putCharOnScreen(c);            
+            if (buffidx < COMMAND_MAX_SIZE) {
+                buff[buffidx++] = c;
+            }
+            screenptr++;
+        }
+    } 
+    if (c=='\n')
+        syscall_nextLine();
+    buff[buffidx++] = '\0';
+    if (c == -1) {
+        putChar(c,FGCOLOR_WHITE);
+        syscall_exit();
+    }
+    return;
+}
+
+int isVocal(char c) {
+    return (c=='a' || c=='e' || c=='i' || c=='o' || c=='u' || c==' ' || c== 'A' || c=='E' || c=='I' || c=='O' || c=='U');
+}
+
+void filterInput(char * buff, int secure) {
+char c;
+    int buffidx=0, screenptr=0;
+    while((c=getChar())!='\n' && c != -1) {
+        if (c == 127 /* DEL ASCII */ ){
+            if ( buffidx!=0 ){
+                    if(!secure)
+                        putCharOnScreen(c);            
+                if ( buffidx >= screenptr-- )
+                    buffidx--;
+            }
+        } else {
+            if(!secure)
+                putCharOnScreen(c);            
+            if (buffidx < COMMAND_MAX_SIZE) {
+                if (isVocal(c))
+                    buff[buffidx++] = c;
+            }
+            screenptr++;
+        }
+    }
+    if (c == '\n')
+        syscall_nextLine();
+    if (c == -1) {
+        syscall_exit();  
+        putChar(c,FGCOLOR_WHITE);
+    }
+    buff[buffidx++] = '\0';
 }
 
 /**
@@ -116,6 +230,10 @@ int putCharAt(char c, int x, int y){
 int putChar(char c, int FGColor){
     syscall_write(c, FGColor, FBCOLOR_BLACK);
     return 0;
+}
+
+void putCharOnScreen(char c) {
+    syscall_writeScreen(c);
 }
 
 /**
@@ -209,6 +327,7 @@ int printf(const char * format, ...){
 
             } else { //format[i] == '//' -> barra de escape
                 if (format[i]=='\n'){
+                    putChar('\n',FGCOLOR_WHITE);
                     syscall_nextLine();
                 } else if (format[i] == '\a') {
                     syscall_beep(1000,10);

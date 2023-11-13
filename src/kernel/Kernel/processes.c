@@ -27,6 +27,7 @@ typedef struct process {
     char children[MAX_PROCESSES];
     char stdin;
     char stdout;
+    char openFDs[MAX_FDS];
 } processType;
 
 processType active_processes[MAX_PROCESSES+1];
@@ -61,6 +62,9 @@ void initProcesses() {
         for (int j=0;j<MAX_PROCESSES;j++) {
             active_processes[i].children[j] = 0;
         }
+        for (int j=2;j<MAX_FDS;j++) {
+            active_processes[i].openFDs[j] = 0;
+        }
         active_processes[i].childrenCount = 0;
         keyboard_blocked_processes[i] = 0;
         waitchild_blocked_processes[i] = 0;
@@ -70,6 +74,14 @@ void initProcesses() {
     }
     active_processes[MAX_PROCESSES].alive = false;
     active_processes[MAX_PROCESSES].state = exited;
+    active_processes[MAX_PROCESSES].stdin = 0;
+    active_processes[MAX_PROCESSES].stdout = 1;
+    active_processes[MAX_PROCESSES].openFDs[0] = 1;
+    active_processes[MAX_PROCESSES].openFDs[1] = 1;
+}
+
+int isOpenedFD(size_t pid, int fd) {
+    return active_processes[pid].openFDs[fd];
 }
 
 char getSTDIN(size_t pid) {
@@ -81,16 +93,24 @@ char getSTDOUT(size_t pid) {
 }
 
 void setSTDIN(size_t pid, char stdin) {
+    if (!isOpenedFD(pid, stdin)) return;
     active_processes[pid].stdin = stdin;
 }
 
 void setSTDOUT(size_t pid, char stdout) {
+    if (!isOpenedFD(pid, stdout)) return;
     active_processes[pid].stdout = stdout;
 }
 
-void sendEOF(int fd) {
-    /* TO-DO */
+void openFD(size_t pid, int fd) {
+    active_processes[pid].openFDs[fd] = 1;
 }
+
+void closeFD(size_t pid, int fd) {
+    active_processes[pid].openFDs[fd] = 0;
+}
+
+
 
 int switchBlock(size_t pid) {
     if(pid <= SHELL_PID || pid >= MAX_PROCESSES) return -1;
@@ -108,6 +128,7 @@ int switchBlock(size_t pid) {
     }
     return 0;
 }
+
 
 void addChildren(size_t parent, size_t child) {
     active_processes[parent].children[active_processes[parent].childrenCount] = child;
@@ -250,7 +271,7 @@ int startProcess(int priority, void (* process), char argc, char* argv[], char f
     _cli();
     void * processMemory = allocMemory(PAGE_SIZE);
     unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
-    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, getSTDIN(getRunningPID()), getSTDOUT(getRunningPID())};
+    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, getSTDIN(getRunningPID()), getSTDOUT(getRunningPID()), {1,1}};
     size_t pid = getFreePID();
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
@@ -258,6 +279,21 @@ int startProcess(int priority, void (* process), char argc, char* argv[], char f
     if(name == "testPhil"){
         setTestPhilPID(pid);
     }
+    _sti();
+    return pid;
+}
+
+int pipeProcess(int priority, void (* process), char argc, char* argv[], char foreground, char* name, char stdin, char stdout) {
+    _cli();
+    void * processMemory = allocMemory(PAGE_SIZE);
+    unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
+    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, stdin, stdout, {0}};
+    newProcess.openFDs[stdin] = 1;
+    newProcess.openFDs[stdout] = 1;
+    size_t pid = getFreePID();
+    active_processes[pid] = newProcess;
+    addProcess(priority, rsp, pid, foreground);
+    addChildren(getRunningPID(), pid);
     _sti();
     return pid;
 }
@@ -296,6 +332,8 @@ int endProcess(size_t pid) {
 }
 
 void exitProcess() {
+    write(getSTDOUT(getRunningPID()), -1, 0xFFFFFF, 0x000000);
+    /* send eof to stdout too*/
     endProcess(getRunningPID());
 }
 

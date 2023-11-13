@@ -14,6 +14,8 @@ void waitForEnter();
 void strcopy(char * dest, char * src, int destSize);
 int strcmplen(char * str1, char * str2, int len);
 unsigned char read(int fd);
+void write(int fd, unsigned char c, int FGColor, int BGColor);
+void sendEOF(int fd);
 void writeFD(int fd, const char *buff);
 void writeByteFD(int fd, char c);
 char *cpuVendor(char *result);

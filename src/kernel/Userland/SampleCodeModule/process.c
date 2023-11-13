@@ -22,6 +22,28 @@ int startProcess(int priority, void (* process)(char, char*[]), char argc, char*
     return value;
 }
 
+int pipeProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name, char stdin, char stdout) {
+  struct processStartSTD * ps = allocMemory(sizeof(struct processStartSTD));
+  ps->foreground = foreground;
+  ps->name = name;
+  ps->stdin = stdin;
+  ps->stdout = stdout;
+  int value = syscall_pipeProcess(priority, process, argc, argv, ps);
+  freeMemory(ps);
+  return value;
+}
+
+int pipeProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name, char stdin, char stdout) {
+  struct processStartSTD * ps = allocMemory(sizeof(struct processStartSTD));
+  ps->foreground = foreground;
+  ps->name = name;
+  ps->stdin = stdin;
+  ps->stdout = stdout;
+  int value = syscall_pipeProcess(priority, process, argc, argv, ps);
+  freeMemory(ps);
+  return value;
+}
+
 void loadProcess(char* name, char* description, void (* process)(char, char*[])) {
     processes[processesCount].name = name;
     processes[processesCount].description = description;
@@ -34,11 +56,19 @@ void initProcesses() {
     loadProcess("test","Testing process", &testingProcess);
     loadProcess("sleep","Sleeping process", &sleepingProcess);
     loadProcess("wait","Waiting process", &waitingProcess);
-    loadProcess("loop","Infinite loop", &infiniteProcess);
+    loadProcess("looping","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
-    loadProcess("testProcesses","Test the processes functions", &test_processes);
     loadProcess("waitpid","Testing waitpid", &testWaitPID);
+    loadProcess("testProcesses","Test the processes functions", &test_processes);
+    loadProcess("testPhil","Test the philosophers problem", &testPhil);
+    loadProcess("testPipes","Test the pipes", &testPipes);
+    loadProcess("pipeSender","Pipe sender for testing the pipes", &pipeSender);
+    loadProcess("cat","Prints the content of standard input", &cat);
+    loadProcess("wc","Prints the number of lines of standard input", &wordcount);
+    loadProcess("filter","Filter the vocals from standard input", &filter);
+    loadProcess("loop", "Periodically prints the PID asking for help", &loop);
 }
+
 
 void printProcesses() {
     printf("All processes:\n");
@@ -56,17 +86,32 @@ int launchProcess(int priority, char* name, char argc, char* argv[], char foregr
     printf("No process with name '%s' found\n",name);
 }
 
+int launchPipeProcess(int priority, char* name, char argc, char* argv[], char foreground, char stdin, char stdout) {
+    for(int i=0;i<processesCount;i++) {
+        if (strcmp(processes[i].name,name)) {
+            return pipeProcess(priority, processes[i].process, argc, argv, foreground, processes[i].name, stdin, stdout);
+        }
+    }
+    printf("No process with name '%s' found\n",name);
+}
+
 void printCurrentPID() {
     printf("Current PID: %d\n",syscall_getpid());
 }
 
 void testingProcess(char argc, char* argv[]) {
+
     printf("Testing process started:\nargc: %d\nPID: %d\n",argc,syscall_getpid());
     
     for(int i=0;i<argc;i++) {
         printf("Argument %d: %s\n",i,argv[i]);
     }
     syscall_exit();
+}
+
+void loop(char argc, char* argv[]) {
+    size_t pid = syscall_getpid();
+    while(1) {printf("Hey! I'm currently stuck in this infinte loop. My PID is %d if you want to help me. Please.\n",pid); syscall_wait(5);};
 }
 
 void infiniteProcess(char argc, char* argv[]) {
@@ -169,7 +214,7 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
     // Create max_processes processes
     for (rq = 0; rq < max_processes; rq++) {
       /* p_rqs[rq].pid = my_create_process("endless_loop", 0, argvAux); */
-      p_rqs[rq].pid = launchProcess(1,"loop",0,argvAux,0);
+      p_rqs[rq].pid = launchProcess(1,"looping",0,argvAux,0);
       if (p_rqs[rq].pid == 0 || p_rqs[rq].pid == 1) {
         printf("test_processes: ERROR creating process\n");
         syscall_exit();
@@ -258,4 +303,41 @@ void waitingProcess(char argc, char* argv[]) {
   syscall_waitpid(strToNum(argv[0]));
   printf("Waiting process ended:\nPID: %d\n",syscall_getpid());
   syscall_exit();
+}
+
+// --------------------------------------------------------------------------------------------//
+void pipeSender(char argc, char * argv[]) {
+  while(1) {
+    printf("Message sent from PID %d!\n",syscall_getpid());
+    sleep(5);
+  }
+}
+
+void testPipes(char argc, char * argv[]) {
+  char buffer[128];
+  while(1) {
+    getInput(buffer, argv[argc-1][0]=='*');
+    printf("\nPID %d Input: %s\n",syscall_getpid(), buffer);
+  }
+}
+
+void cat(char argc, char* argv[]) {
+    char buffer[128];
+    while(1) {
+        catInput(buffer, argv[argc-1][0]=='*');
+        printf("%s\n",buffer);
+    }
+}
+
+void wordcount(char argc, char* argv[]) {
+  printf("Number of lines: %d", getWC(0));
+  syscall_exit();
+}
+
+void filter(char argc, char* argv[]) {
+  char buffer[128];
+  while(1) {
+    filterInput(buffer, argv[argc-1][0]=='*');
+    printf("%s\n",buffer);
+  }
 }

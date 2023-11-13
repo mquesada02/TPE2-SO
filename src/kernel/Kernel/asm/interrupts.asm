@@ -206,7 +206,7 @@ _irq08init:
 	mov al, 0x8B
 	out 70h, al
 	mov al, dl
-	or al, 0x40
+	or al, 0xBF
 	out 71h, al	
 	pop rdx
 	pop rax

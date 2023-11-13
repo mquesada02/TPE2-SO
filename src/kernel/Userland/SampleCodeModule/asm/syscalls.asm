@@ -26,13 +26,21 @@ GLOBAL syscall_sem_open
 GLOBAL syscall_sem_close
 GLOBAL syscall_sem_wait
 GLOBAL syscall_sem_post
+GLOBAL syscall_dupstdin
+GLOBAL syscall_dupstdout
+GLOBAL syscall_open
+GLOBAL syscall_close
+GLOBAL syscall_pipe
+GLOBAL syscall_getstdin
+GLOBAL syscall_getstdout
+GLOBAL syscall_pipeProcess
+GLOBAL syscall_writeScreen
 GLOBAL syscall_createPhils
 
 section .text
 
 syscall_read:
     pushf
-	mov rsi, rdi
     mov rdi,0      ; syscall for read
     int 80h
     popf
@@ -264,6 +272,75 @@ syscall_sem_post:
 	pushf
 	mov rsi, rdi
 	mov rdi, 27
+	int 80h
+	popf
+	ret
+syscall_dupstdin:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 28
+	int 80h
+	popf
+	ret
+syscall_dupstdout:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 29
+	int 80h
+	popf
+	ret
+syscall_open:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 30
+	int 80h
+	popf
+	ret
+syscall_close:
+	pushf
+	mov rdx, rsi
+	mov rsi, rdi
+	mov rdi, 31
+	int 80h
+	popf
+	ret
+syscall_pipe:
+	pushf
+	mov rsi, rdi
+	mov rdi, 32
+	int 80h
+	popf
+	ret
+syscall_getstdin:
+	pushf
+	mov rdi, 33
+	int 80h
+	popf
+	ret
+syscall_getstdout:
+	pushf
+	mov rdi, 34
+	int 80h
+	popf
+	ret
+syscall_pipeProcess:
+	pushf
+	mov r9, r8
+	mov r8, rcx
+    mov rcx, rdx   
+	mov rdx, rsi	
+	mov rsi, rdi	
+    mov rdi, 35
+	int 80h
+	popf
+	ret 
+syscall_writeScreen:
+	pushf
+	mov rsi, rdi
+	mov rdi, 36
 	int 80h
 	popf
 	ret
