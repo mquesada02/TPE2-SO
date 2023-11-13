@@ -1,3 +1,4 @@
+#ifndef BUDDYSYSTEM
 #include <MemoryManager.h>
 
 // | 0x0000000000050000 |0x000000000009FFFF|320 KiB| Free |
@@ -209,3 +210,4 @@ void getMemStatus(size_t * free, size_t * occupied) {
     *free = mm->free;
     *occupied = mm->occupied;
 }
+#endif
