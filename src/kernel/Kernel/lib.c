@@ -217,20 +217,14 @@ void writeByteFD(int fd, char c) {
         blockProcess(getRunningPID());
         _stint20();
     }
+    if (fd == 1 && c!= -1) {
+        drawChar(c, 0xFFFFFF, 0x000000);
+    }
     fd_table[fd].fdbuff[fd_table[fd].pos] = c;
     fd_table[fd].pos++;
     return;
 }
 
-void writeFD(int fd, const char *buff) {
-    for(int i=fd_table[fd].pos;buff[i] && i<FD_SIZE;i++) {
-        fd_table[fd].fdbuff[i] = buff[i];
-        fd_table[fd].pos++;
-    }
-    if (fd_table[fd].pos == FD_SIZE) {
-        blockProcess(getRunningPID());
-    }
-}
 
 /**
  * @brief Espera a que el caracter ingresado por entrada de teclado sea un salto de línea.

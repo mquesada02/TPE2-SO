@@ -34,6 +34,7 @@ GLOBAL syscall_pipe
 GLOBAL syscall_getstdin
 GLOBAL syscall_getstdout
 GLOBAL syscall_pipeProcess
+GLOBAL syscall_writeScreen
 
 section .text
 
@@ -335,3 +336,10 @@ syscall_pipeProcess:
 	int 80h
 	popf
 	ret 
+syscall_writeScreen:
+	pushf
+	mov rsi, rdi
+	mov rdi, 36
+	int 80h
+	popf
+	ret

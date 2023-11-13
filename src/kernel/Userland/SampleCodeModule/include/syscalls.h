@@ -23,6 +23,7 @@ extern unsigned char syscall_read();
 extern long int * syscall_getRegisters();
 extern void syscall_writeAt(unsigned char c, int x, int y, int FGColor, int BGColor);
 extern void syscall_write(unsigned char c, int FGColor, int BGColor);
+extern void syscall_writeScreen(unsigned char c);
 extern void syscall_nextLine();
 extern void syscall_wait(int seconds);
 extern void syscall_beep(uint32_t freq, uint32_t time);

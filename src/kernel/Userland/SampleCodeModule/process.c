@@ -47,7 +47,7 @@ void initProcesses() {
     loadProcess("test","Testing process", &testingProcess);
     loadProcess("sleep","Sleeping process", &sleepingProcess);
     loadProcess("wait","Waiting process", &waitingProcess);
-    loadProcess("loop","Infinite loop", &infiniteProcess);
+    loadProcess("looping","Infinite loop", &infiniteProcess);
     loadProcess("testMem","Memory testing process", &test_mm);
     loadProcess("waitpid","Testing waitpid", &testWaitPID);
     loadProcess("testProcesses","Test the processes functions", &test_processes);
@@ -56,6 +56,8 @@ void initProcesses() {
     loadProcess("pipeSender","Pipe sender for testing the pipes", &pipeSender);
     loadProcess("cat","Prints the content of standard input", &cat);
     loadProcess("wc","Prints the number of lines of standard input", &wordcount);
+    loadProcess("filter","Filter the vocals from standard input", &filter);
+    loadProcess("loop", "Periodically prints the PID asking for help", &loop);
 }
 
 
@@ -96,6 +98,11 @@ void testingProcess(char argc, char* argv[]) {
         printf("Argument %d: %s\n",i,argv[i]);
     }
     syscall_exit();
+}
+
+void loop(char argc, char* argv[]) {
+    size_t pid = syscall_getpid();
+    while(1) {printf("Hey! I'm currently stuck in this infinte loop. My PID is %d if you want to help me. Please.\n",pid); syscall_wait(5);};
 }
 
 void infiniteProcess(char argc, char* argv[]) {
@@ -198,7 +205,7 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
     // Create max_processes processes
     for (rq = 0; rq < max_processes; rq++) {
       /* p_rqs[rq].pid = my_create_process("endless_loop", 0, argvAux); */
-      p_rqs[rq].pid = launchProcess(1,"loop",0,argvAux,0);
+      p_rqs[rq].pid = launchProcess(1,"looping",0,argvAux,0);
       if (p_rqs[rq].pid == 0 || p_rqs[rq].pid == 1) {
         printf("test_processes: ERROR creating process\n");
         syscall_exit();
@@ -352,7 +359,7 @@ void pipeSender(char argc, char * argv[]) {
 void testPipes(char argc, char * argv[]) {
   char buffer[128];
   while(1) {
-    getInput(buffer, 1);
+    getInput(buffer, argv[argc-1][0]=='*');
     printf("\nPID %d Input: %s\n",syscall_getpid(), buffer);
   }
 }
@@ -360,12 +367,20 @@ void testPipes(char argc, char * argv[]) {
 void cat(char argc, char* argv[]) {
     char buffer[128];
     while(1) {
-        catInput(buffer);
+        catInput(buffer, argv[argc-1][0]=='*');
         printf("%s\n",buffer);
     }
 }
 
 void wordcount(char argc, char* argv[]) {
-  printf("Number of lines: %d", getWC());
+  printf("Number of lines: %d", getWC(0));
   syscall_exit();
+}
+
+void filter(char argc, char* argv[]) {
+  char buffer[128];
+  while(1) {
+    filterInput(buffer, argv[argc-1][0]=='*');
+    printf("%s\n",buffer);
+  }
 }

@@ -1,6 +1,6 @@
 #include <sys/types.h>
 
-#define MAX_PROCESSES 20
+#define MAX_PROCESSES 40
 #define HALT_PID 0
 #define SHELL_PID 1
 #define KEYBOARD 1
@@ -39,3 +39,4 @@ void exitProcess();
 int killProcess(size_t pid);
 int isKBlocked(size_t pid);
 int pipeProcess(int priority, void (* process), char argc, char* argv[], char foreground, char* name, char stdin, char stdout);
+void loop(char argc, char* argv[]);

@@ -53,7 +53,8 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
                 write(getSTDOUT(getRunningPID()), param1, param2, param3);
             break;
         case 2:
-            drawNextLine();
+            if (getSTDOUT(getRunningPID()) == 1)
+                drawNextLine();
             break;
         case 3:
         	_sti();
@@ -170,7 +171,13 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
                 char stdout;
             };
             return pipeProcess(param1, param2, param3, param4, ((struct processStartSTD *)param5)->foreground, ((struct processStartSTD *)param5)->name, ((struct processStartSTD *)param5)->stdin, ((struct processStartSTD *)param5)->stdout);
-
+            break;
+        case 36:
+            if (param1==127)    
+                deleteChar();
+            else
+                write(1, param1, 0xFFFFFF, 0x000000);
+            break;
 	}
 	return 0;
 }

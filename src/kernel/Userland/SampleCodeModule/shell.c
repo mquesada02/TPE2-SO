@@ -80,7 +80,7 @@ void loadAllModules() {
     loadModule("divide", "Asks for two numbers and prints the result of dividing one by the other", &divide);
     //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
-    loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
+    //loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
     loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("mem", "Prints the memory status", &mem);
     loadModule("pid", "Prints the pid of the current process", &printPID);
@@ -89,7 +89,10 @@ void loadAllModules() {
     loadModule("ps","Prints all processes", &printCurrentProcesses);
     loadModule("block","Switch the process status between blocked and ready given a PID", &blockProcess);
     loadModule("nice", "Change the priority of a process given a PID and a priority", &changePriority);
-    loadModule("loop","Periodically prints the PID asking for help.", &looping);
+    loadModule("loop","Periodically prints the PID asking for help", &loopProcess);
+    loadModule("cat", "Alias for pstart 1 cat", &catProcess);
+    loadModule("wc", "Alias for pstart 1 wc", &wcProcess);
+    loadModule("filter", "Alias for pstart 1 filter", &filterProcess);
 }
 
 /**
@@ -110,6 +113,63 @@ void runModule(const char * input, char argc, char * params[]){
     return;
 }
 
+void runProcessAliasPipe(const char * input, char argc, char * params[]) {
+    /* input: process name for pstart */
+    char* command = "pstart";
+    char ** argv = syscall_allocMemory(MAX_PARAMETERS*sizeof(char*));
+    argv[0] = "1";
+    argv[1] = input;
+    int pipeIndex = getPipeIndex(argc, params);
+    if (pipeIndex != -1) {
+
+        int fds[2];
+        int pipe = syscall_pipe(fds);
+        if (pipe == -1) {
+            printf("Error creating pipe.\n");
+            return;
+        }
+
+        for(int i=2;i<pipeIndex+2;i++) {
+            argv[i] = params[i-2];
+        }        
+        pstartPipe(pipeIndex+2, argv, 0, fds[0]);
+        argv+=(pipeIndex+2)+1;
+        params+=pipeIndex+1;
+        argv[0] = "1";
+        for (int i=1; i<argc-(pipeIndex+1)+1; i++) {
+            argv[i] = params[i-1];
+        }
+        argv[argc-(pipeIndex+1)+1] = "*";
+        argv[argc-(pipeIndex+1)+2] = "&";
+        pstartPipe(argc-(pipeIndex+1)+3, argv, fds[0], 1);
+        return;
+    } else {
+        pstart(argc+2, argv);
+        return;
+    }
+
+}
+
+void catProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("cat", argc, argv);
+    return;
+}
+
+void wcProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("wc", argc, argv);
+    return;
+}
+
+void filterProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("filter", argc, argv);
+    return;
+}
+
+void loopProcess(char argc, char * argv[]) {
+    runProcessAliasPipe("loop", argc, argv);
+    return;
+}
+
 void runModulePipe(const char * input, char argc, char * params[], int pipeIndex) {
     if (pipeIndex == -1 || strcmp(input,"pstart") == 0) {
         runModule(input,argc,params);
@@ -122,8 +182,8 @@ void runModulePipe(const char * input, char argc, char * params[], int pipeIndex
         printf("Error creating pipe.\n");
         return;
     }
-    //(params+pipeIndex+1)[argc-(pipeIndex+1)] = "&"; // al segundo proceso lo mando al bg siempre
-    pstartPipe(argc-(pipeIndex+1)/* +1 */, params+(pipeIndex+1), fds[0], 1);
+    (params+pipeIndex+1)[argc-(pipeIndex+1)] = "&"; // al segundo proceso lo mando al bg siempre
+    pstartPipe(argc-(pipeIndex+1)+1, params+(pipeIndex+1), fds[0], 1);
     pstartPipe(pipeIndex, params, 0, fds[0]);
     
 
@@ -290,6 +350,7 @@ int pstart(char argc, char * argv[]) {
     return launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
 }
 
+
 void printPID() {
     printCurrentPID();
 }
@@ -331,14 +392,4 @@ void changePriority(char argc, char * argv[]) {
     } else {
         printf("Changed the priority of the process with PID %s to %s.\n",argv[0],argv[1]);
     }
-}
-
-void loop(char argc, char* argv[]) {
-    size_t pid = syscall_getpid();
-    while(1) {printf("Hey! I'm currently stuck in this infinte loop. My PID is %d if you want to help me. Please.\n",pid); syscall_wait(5);};
-}
-
-void looping(char argc, char* argv[]) {
-    char foreground = argv[argc-1][0]=='&';
-    startProcess(1, &loop, argc-(1+foreground), argv,!foreground,"loop");
 }

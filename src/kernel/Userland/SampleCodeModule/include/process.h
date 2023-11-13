@@ -1,6 +1,6 @@
 #define _PROCESS_H_
 
-#define MAX_PROCESSES 20
+#define MAX_PROCESSES 40
 
 void initProcesses();
 void printProcesses();
@@ -21,3 +21,5 @@ void testPipes(char argc, char * argv[]);
 void pipeSender(char argc, char * argv[]);
 void cat(char argc, char* argv[]);
 void wordcount(char argc, char* argv[]);
+void filter(char argc, char* argv[]);
+void loop(char argc, char* argv[]);

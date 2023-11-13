@@ -306,7 +306,7 @@ int endProcess(size_t pid) {
 }
 
 void exitProcess() {
-    writeByteFD(getSTDOUT(getRunningPID()), -1);
+    write(getSTDOUT(getRunningPID()), -1, 0xFFFFFF, 0x000000);
     /* send eof to stdout too*/
     endProcess(getRunningPID());
 }
