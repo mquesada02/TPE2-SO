@@ -2,6 +2,7 @@
 #include <processes.h>
 #include <interrupts.h>
 #include <lib.h>
+#include <time.h>
 
 
 typedef struct file_descriptor {
@@ -13,6 +14,26 @@ fd_t fd_table[MAX_FDS];
 
 
 extern char buffer;
+
+void wait(int seconds){
+    int initial = ticks_elapsed();
+	while ( (double) (ticks_elapsed()-initial)/18.0 < seconds );
+}
+
+// Random
+static uint32_t m_z = 362436069;
+static uint32_t m_w = 521288629;
+
+uint32_t GetUint() {
+  m_z = 36969 * (m_z & 65535) + (m_z >> 16);
+  m_w = 18000 * (m_w & 65535) + (m_w >> 16);
+  return (m_z << 16) + m_w;
+}
+
+uint32_t GetUniform(uint32_t max) {
+  uint32_t u = GetUint();
+  return 1 + (u + 1.0) * 2.328306435454494e-10 * (max-1);
+}
 
 
 void initFDs() {
@@ -221,4 +242,26 @@ int strcmplen(char * str1, char * str2, int len){
 		i++;
 	}
 	return 0;
+}
+
+int64_t satoi(char *str) {
+  uint64_t i = 0;
+  int64_t res = 0;
+  int8_t sign = 1;
+
+  if (!str)
+    return 0;
+
+  if (str[i] == '-') {
+    i++;
+    sign = -1;
+  }
+
+  for (; str[i] != '\0'; ++i) {
+    if (str[i] < '0' || str[i] > '9')
+      return 0;
+    res = res * 10 + str[i] - '0';
+  }
+
+  return res * sign;
 }

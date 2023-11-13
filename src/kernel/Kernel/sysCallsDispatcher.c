@@ -15,6 +15,7 @@
 extern char buffer;
 extern long int registers_space[];
 
+enum state {running, ready, blocked, exited};
 
 
 /**
@@ -33,10 +34,6 @@ static void write(unsigned char c, int FGColor, int BGColor) { drawChar(c, FGCol
  * 
  * @param seconds Segundos que se desean esperar.
  */
-void wait(int seconds){
-    int initial = ticks_elapsed();
-	while ( (double) (ticks_elapsed()-initial)/18.0 < seconds );
-}
 
 /**
  * @brief Llama a los distintos Handlers para cada interrupción de software.
@@ -149,6 +146,8 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
         case 27:
             return sem_post(param1);
             break;
+        case 37:
+            createPhils(param1);
 	}
 	return 0;
 }

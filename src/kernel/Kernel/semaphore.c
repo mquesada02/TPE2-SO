@@ -1,4 +1,4 @@
-#include <semaphore.h>
+#include "./include/semaphore.h"
 
 #define NULL (void *) 0
 #define MAX_LENGTH 30

@@ -1,5 +1,6 @@
-#include <library.h>
-#include <semLibrary.h>
+#include <videodriver.h>
+#include "semaphore.h"
+#include <lib.h>
 
 #define NULL (void*)0
 #define N 25 /* número mäximo de filósofos */
@@ -11,13 +12,13 @@
 
 typedef int sem_type; 
 
-extern int state[N];
+extern int ph_state[N];
 extern sem_type *mutex;
 extern sem_type *s[N];
 extern int last_i;
 extern int philosopherPIDs[N];
 
-void think(int i);
+void think();
 
 void eat();
 

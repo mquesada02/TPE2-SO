@@ -2,6 +2,7 @@
 #include <scheduler.h>
 #include <interrupts.h>
 #include <MemoryManager.h>
+#include <philosophers.h>
 
 #include <lib.h>
 
@@ -10,6 +11,8 @@
 
 #define false 0
 #define true 1
+
+enum state {running, ready, blocked, exited};
 
 typedef struct process {
     char* name;
@@ -283,7 +286,7 @@ int endProcess(size_t pid) {
     freeMemory(active_processes[pid].dataMemory);
     if(pid == getTestPhilPID()){
         setTestPhilPID(-1);
-
+        kill_philosophers();
     }
     if(active_processes[pid].name != "philosopher"){
         enableShell();
@@ -316,4 +319,61 @@ unsigned long prepareHalt() { // pid = 0 is halt
 
 //---------------------------philosophers--------------------------------
 
+void philosopher(uint64_t argc, char *argv[]) /* 1 parametro: número de filósofo*/
+{
+  if (argc != 1)
+    exitProcess();
 
+  int i = satoi(argv[0]);
+
+  while(1){ /* se repite en forma indefinida */
+    think(); /* el filósofo está pensando */
+    take_forks(i); /* adquiere dos tenedores o se bloquea */
+    eat(); /* come espagueti */
+    leave_forks(i); /* pone de vuelta ambos tenedores en la mesa */
+  }
+}
+
+void createPhils(int cant){
+    mutex = sem_open("mutex_phil", 1);
+    for(int i =0; i<cant; i++){
+        createPhil();
+    }
+}
+
+void createPhil(){
+  if(last_i >= N)
+    return;
+  char ** buffer = allocMemory(sizeof(char*));
+  buffer[0] = allocMemory(3*sizeof(char));
+  numToStr(last_i, 10, buffer[0]);
+
+  char aux[7] = {'p', 'h', 'i', 'l'};
+  ph_state[last_i] = THINKING;
+  aux[4] = buffer[0][0];
+  aux[5] = buffer[0][1];
+  aux[6] = '\0';
+  s[last_i] = sem_open(aux, 1);
+
+  philosopherPIDs[last_i] = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
+  last_i++;
+  freeMemory(buffer[0]);
+  freeMemory(buffer);
+}
+
+void removePhil(){
+  if(last_i <= 2)
+    return;
+  last_i--;
+  killProcess(philosopherPIDs[last_i]);
+  sem_close(s[last_i]);
+}
+
+void kill_philosophers(){
+    for (int i = 0; i < last_i; i++){
+        sem_close(s[i]);
+        killProcess(philosopherPIDs[i]);
+    }
+    last_i = 0;
+    sem_close(mutex);
+}

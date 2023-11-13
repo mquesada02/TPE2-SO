@@ -17,5 +17,8 @@ unsigned char read(int fd);
 void writeFD(int fd, const char *buff);
 void writeByteFD(int fd, char c);
 char *cpuVendor(char *result);
+void wait(int seconds);
+uint32_t GetUniform(uint32_t max);
+int64_t satoi(char *str);
 
 #endif

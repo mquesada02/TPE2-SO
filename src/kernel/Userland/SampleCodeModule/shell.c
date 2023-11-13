@@ -5,7 +5,6 @@
 #include <MemoryManagerADT.h>
 #include <syscalls.h>
 #include <process.h>
-#include <philosophers.h>
 
 #define NULL (void*) 0
 
@@ -298,6 +297,7 @@ void looping(char argc, char* argv[]) {
 }
 
 //-------philosophers----------------------------------------------
+#define N 25 /* número mäximo de filósofos */
 
 void testPhil(uint64_t argc, char *argv[]) {
     if(argc != 1){
@@ -312,10 +312,8 @@ void testPhil(uint64_t argc, char *argv[]) {
       syscall_exit();
     }
 
-    mutex = sem_open("mutex_phil", 1);
-    for(int i = 0; i < cant; i++){
-        createPhil();
-    }
+    syscall_createPhils(cant); 
+
     while(1);
     // while(1){
     //   write_state();

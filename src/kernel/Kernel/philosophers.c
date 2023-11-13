@@ -1,7 +1,7 @@
 /*SOLUCIÓN AL PROBLEMA DE LOS FILÓSOFOS COMENSALES DEL LIBRO DE TANENBAUM*/
 #include <philosophers.h>
 
-int state[N]; /* arreglo que lleva registro del estado de todos*/
+int ph_state[N]; /* arreglo que lleva registro del estado de todos*/
 sem_type *mutex = NULL; /* exclusión mutua para las regiones críticas */
 sem_type *s[N] = {0}; /* un semáforo por filósofo */
 int last_i = 0; /* indice del ultimo filosofo */
@@ -12,7 +12,7 @@ void test(int i);
 // void start_phil(int cant){
 //     char aux[7] = {'p', 'h', 'i', 'l'};
 //     for (int i = 0; i < cant; i++){
-//         state[i] = THINKING;
+//         ph_state[i] = THINKING;
 //         if(i <= 9){
 //             aux[4] = i + '0';
 //             aux[5] = '\0';
@@ -28,19 +28,18 @@ void test(int i);
 //     last_i = cant;
 // }
 
-void think(int i){
-    //printf("Th%d\n", i);
-    sleep(3);
+void think(){
+    wait(GetUniform(5));
 }
 
 void eat(){
-    sleep(1);
+    wait(GetUniform(5));
 }
 
 void take_forks(int i) /* i: número de filósofo, de 0 a N1 */
 {
     sem_wait(mutex); /* entra a la región crítica */
-    state[i] = HUNGRY; /* registra el hecho de que el filósofo i está hambriento */
+    ph_state[i] = HUNGRY; /* registra el hecho de que el filósofo i está hambriento */
     test(i); /* trata de adquirir 2 tenedores */
     sem_post(mutex); /* sale de la región crítica */
     sem_wait(s[i]); /* se bloquea si no se adquirieron los tenedores */
@@ -49,7 +48,7 @@ void take_forks(int i) /* i: número de filósofo, de 0 a N1 */
 void leave_forks(int i) /* i: número de filósofo, de 0 a N–1 */
 {
     sem_wait(mutex); /* entra a la región crítica */
-    state[i] = THINKING; /* el filósofo terminó de comer */
+    ph_state[i] = THINKING; /* el filósofo terminó de comer */
     test(LEFT); /* verifica si el vecino izquierdo puede comer ahora */
     test(RIGHT); /* verifica si el vecino derecho puede comer ahora */
     sem_post(mutex); /* sale de la región crítica */
@@ -57,8 +56,8 @@ void leave_forks(int i) /* i: número de filósofo, de 0 a N–1 */
 
 void test(int i) /* i: número de filósofo, de 0 a N1 */
 {
-    if (state[i] == HUNGRY && state[LEFT] != EATING && state[RIGHT] != EATING) {
-        state[i] = EATING;
+    if (ph_state[i] == HUNGRY && ph_state[LEFT] != EATING && ph_state[RIGHT] != EATING) {
+        ph_state[i] = EATING;
         write_state();
         sem_post(s[i]);
     }
@@ -69,9 +68,10 @@ char* write_state(){
     char buffer[2*N+1];
     int i;
     for(i=0; i<last_i; i++){
-        buffer[2*i] = state[i]==EATING? 'E' : state[i]==HUNGRY? 'H' : 'T';
+        buffer[2*i] = ph_state[i]==EATING? 'E' : ph_state[i]==HUNGRY? 'H' : 'T';
         buffer[2*i+1] = ' ';
     }
     buffer[2*i] = '\0';
-    printf("%s\n", buffer);
+    drawString(buffer, 0xFFFFFF, 0x000000);
+    drawNextLine();
 }

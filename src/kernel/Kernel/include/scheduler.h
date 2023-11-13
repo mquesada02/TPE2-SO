@@ -2,7 +2,6 @@
 #include <MemoryManager.h>
 #include <processes.h>
 
-enum state {running, ready, blocked, exited};
 
 void initPriorityQueue();
 

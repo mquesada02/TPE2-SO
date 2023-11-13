@@ -37,3 +37,5 @@ int killProcess(size_t pid);
 int isKBlocked(size_t pid);
 void setTestPhilPID(int pid);
 int getTestPhilPID();
+void createPhil();
+void createPhils(int cant);

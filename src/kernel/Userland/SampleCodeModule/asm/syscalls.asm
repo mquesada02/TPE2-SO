@@ -26,6 +26,7 @@ GLOBAL syscall_sem_open
 GLOBAL syscall_sem_close
 GLOBAL syscall_sem_wait
 GLOBAL syscall_sem_post
+GLOBAL syscall_createPhils
 
 section .text
 
@@ -263,6 +264,14 @@ syscall_sem_post:
 	pushf
 	mov rsi, rdi
 	mov rdi, 27
+	int 80h
+	popf
+	ret
+
+syscall_createPhils
+	pushf
+	mov rsi, rdi
+	mov rdi, 37
 	int 80h
 	popf
 	ret

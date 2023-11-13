@@ -6,6 +6,9 @@
 #define maxQuantums 4
 
 #define prioritiesAmount 32
+
+enum state {running, ready, blocked, exited};
+
 static int initialPriority = 0;
 
 size_t runningPID = MAX_PROCESSES;
