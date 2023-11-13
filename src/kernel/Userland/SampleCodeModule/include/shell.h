@@ -1,7 +1,7 @@
 #ifndef _SHELL_H_
 #define _SHELL_H_
 
-#define TOTAL_MODULES 17
+#define TOTAL_MODULES 18
 #define REGISTERS_COUNT 16
 #define DIV_BUFF_SIZE 12
 #define COMMAND_MIN_SIZE 4

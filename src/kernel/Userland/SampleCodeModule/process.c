@@ -33,17 +33,6 @@ int pipeProcess(int priority, void (* process)(char, char*[]), char argc, char* 
   return value;
 }
 
-int pipeProcess(int priority, void (* process)(char, char*[]), char argc, char* argv[], char foreground, char* name, char stdin, char stdout) {
-  struct processStartSTD * ps = allocMemory(sizeof(struct processStartSTD));
-  ps->foreground = foreground;
-  ps->name = name;
-  ps->stdin = stdin;
-  ps->stdout = stdout;
-  int value = syscall_pipeProcess(priority, process, argc, argv, ps);
-  freeMemory(ps);
-  return value;
-}
-
 void loadProcess(char* name, char* description, void (* process)(char, char*[])) {
     processes[processesCount].name = name;
     processes[processesCount].description = description;
