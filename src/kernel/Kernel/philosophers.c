@@ -63,7 +63,7 @@ void test(int i) /* i: número de filósofo, de 0 a N1 */
     }
 }
 
-char* write_state(){
+void write_state(){
     //printf("en write_state\n");
     char buffer[2*N+1];
     int i;
@@ -74,4 +74,5 @@ char* write_state(){
     buffer[2*i] = '\0';
     drawString(buffer, 0xFFFFFF, 0x000000);
     drawNextLine();
+    return;
 }

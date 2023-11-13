@@ -16,7 +16,7 @@ void infiniteProcess(char argc, char* argv[]);
 void sleepingProcess(char argc, char* argv[]);
 void waitingProcess(char argc, char* argv[]);
 void testWaitPID(char argc, char* argv[]);
-void testPhil(uint64_t argc, char *argv[]);
+void testPhil(char argc, char *argv[]);
 void testPipes(char argc, char * argv[]);
 void pipeSender(char argc, char * argv[]);
 void cat(char argc, char* argv[]);

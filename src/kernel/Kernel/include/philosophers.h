@@ -2,7 +2,6 @@
 #include "semaphore.h"
 #include <lib.h>
 
-#define NULL (void*)0
 #define N 25 /* número mäximo de filósofos */
 #define LEFT (i+last_i-1)%last_i /* número del vecino izquierdo de i */
 #define RIGHT (i+1)%last_i /* número del vecino derecho de i */
@@ -26,5 +25,7 @@ void take_forks(int i);
 
 void leave_forks(int i);
 
-char* write_state();
+void write_state();
+
+void kill_philosophers();
 

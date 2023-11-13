@@ -19,15 +19,6 @@ int getChar(){
     return syscall_read();
 }   
 
-char * strcat(char *dest, const char *src) {
-    char *rdest = dest;
-
-    while (*dest)
-      dest++;
-    while (*dest++ = *src++)
-      ;
-    return rdest;
-}
 
 char parseInput(char * input, char * command, char ** argv) {
     int inputIndex = 0;

@@ -42,7 +42,6 @@ void getTime(char * timeStr);
 void getKeyboardState(char * keys);
 
 int strcmp (const char* s1, const char* s2);
-char * strcat(char *dest, const char *src);
 
 void drawCircle(int x, int y, int r, uint8_t color);
 void drawRectangle(int x, int y, int h, int w, uint8_t color);

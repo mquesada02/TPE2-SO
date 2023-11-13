@@ -2,9 +2,8 @@
 
 // tests
 
-uint64_t test_mm(uint64_t argc, char *argv[]);
-int64_t test_processes(uint64_t argc, char *argv[]);
-
+void test_mm(char argc, char *argv[]);
+void test_processes(char argc, char *argv[]);
 // utils
 
 uint32_t GetUint();

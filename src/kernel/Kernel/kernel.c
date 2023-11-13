@@ -23,8 +23,6 @@ static void * const sampleDataModuleAddress = (void*)0x500000;
 
 typedef int (*EntryPoint)();
 
-#define NULL (void*) 0
-
 void clearBSS(void * bssAddress, uint64_t bssSize) {
 	memset(bssAddress, 0, bssSize);
 }
@@ -101,7 +99,7 @@ int main() {
 	
 	//_sti();
 	//_sti();
-	startProcess(0,(EntryPoint)sampleCodeModuleAddress,1,(char**){"shell"}, 1, "shell");
+	startProcess(0,(EntryPoint)sampleCodeModuleAddress,1,(char*[]){"shell"}, 1, "shell");
 	//((EntryPoint)sampleCodeModuleAddress)();
 	//halting();
 	while(1){

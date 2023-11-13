@@ -5,7 +5,7 @@
 #include <videodriver.h>
 #include <lib.h>
 
-#define NULL (void*) 0
+#define NULL 0
 #define false 0
 #define true 1
 

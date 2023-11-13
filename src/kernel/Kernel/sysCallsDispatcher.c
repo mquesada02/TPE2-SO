@@ -10,7 +10,7 @@
 #include <processes.h>
 #include <scheduler.h>
 #include <pipe.h>
-//#include <semaphore.h>
+#include "./include/semaphore.h"
 
 
 extern char buffer;
@@ -85,20 +85,20 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
             drawCharAt(param1, param4, param5, param2, param3);            
             break;
         case 13:
-            getMemStatus(param1, param2);
+            getMemStatus((size_t *)param1, (size_t *)param2);
             break;
         case 14:
-            return allocMemory(param1);
+            return (long int)allocMemory(param1);
             break;
         case 15:
-            return freeMemory(param1);
+            return freeMemory((void*)param1);
             break;
         case 16:
             struct processStart {
                 char foreground;
                 char * name;
             };
-            int value = startProcess(param1, param2, param3, param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
+            int value = startProcess(param1, (void*)param2, param3, (char**)param4, ((struct processStart *)param5)->foreground, ((struct processStart *)param5)->name);
             if(((struct processStart *)param5)->foreground) //foreground
                 setProcessState(getRunningPID(), blocked);
             _stint20();
@@ -126,16 +126,16 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
             return changePriority(param1, param2);
             break;
         case 24:
-            return sem_open(param1, param2);
+            return (long int)sem_open((char*)param1, param2);
             break;
         case 25:
-            return sem_close(param1);
+            return sem_close((sem_type*)param1);
             break;
         case 26:
-            return sem_wait(param1);
+            return sem_wait((sem_type*)param1);
             break;
         case 27:
-            return sem_post(param1);
+            return sem_post((sem_type*)param1);
             break;
         case 28:
             setSTDIN(param1, param2);
@@ -150,7 +150,7 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
             closeFD(param1, param2);
             break;
         case 32:
-            return pipe(param1);
+            return pipe((int*)param1);
             break;
         case 33: 
             return getSTDIN(getRunningPID());
@@ -165,7 +165,7 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
                 char stdin;
                 char stdout;
             };
-            return pipeProcess(param1, param2, param3, param4, ((struct processStartSTD *)param5)->foreground, ((struct processStartSTD *)param5)->name, ((struct processStartSTD *)param5)->stdin, ((struct processStartSTD *)param5)->stdout);
+            return pipeProcess(param1, (void*)param2, param3, (char**)param4, ((struct processStartSTD *)param5)->foreground, ((struct processStartSTD *)param5)->name, ((struct processStartSTD *)param5)->stdin, ((struct processStartSTD *)param5)->stdout);
             break;
         case 36:
             if (param1==127)    

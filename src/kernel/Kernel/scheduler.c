@@ -1,8 +1,6 @@
 //importante -> cambiar malloc y free por los nuestros, pero estan en userspace asi que no se :/
 #include <scheduler.h>
 
-#define NULL 0
-
 #define maxQuantums 4
 
 #define prioritiesAmount 32
@@ -271,7 +269,7 @@ int changePriority(size_t pid, int priority) {
             }
             // lo agrego a la prioridad deseada
             Node * priorityCurrent = priorityQueue[priority].first;
-            Node * priorityLast = priorityQueue[priority].last;
+           /*  Node * priorityLast = priorityQueue[priority].last; */
             if (priorityCurrent == NULL) {
                 priorityQueue[priority].first = current;
                 priorityQueue[priority].last = current;
@@ -283,6 +281,7 @@ int changePriority(size_t pid, int priority) {
             return 0;
         }
     }
+    return -1;
 }
 
 unsigned long selectToRun(){

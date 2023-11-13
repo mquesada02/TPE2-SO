@@ -11,6 +11,8 @@ void stopProcess(unsigned long rsp, int state);
 
 void removeProcess(size_t pid);
 
+void setPriorityCounter();
+
 void printProcesses();
 
 int changePriority(size_t pid, int priority);size_t getRunningPID();

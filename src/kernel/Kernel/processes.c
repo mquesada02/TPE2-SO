@@ -25,9 +25,9 @@ typedef struct process {
     size_t parentPID;
     char childrenCount;
     char children[MAX_PROCESSES];
-    char stdin;
-    char stdout;
-    char openFDs[MAX_FDS];
+    int stdin;
+    int stdout;
+    int openFDs[MAX_FDS];
 } processType;
 
 processType active_processes[MAX_PROCESSES+1];
@@ -36,7 +36,7 @@ size_t waitchild_blocked_processes[MAX_PROCESSES];
 void * sem_blocked_processes[MAX_PROCESSES];
 char waiting_sem_locked[MAX_PROCESSES];
 int fd_blocked_processes[MAX_PROCESSES];
-static char j = 0;
+static int j = 0;
 
 int testPhilPID = -1;
 int getTestPhilPID() {
@@ -131,7 +131,7 @@ int switchBlock(size_t pid) {
 
 
 void addChildren(size_t parent, size_t child) {
-    active_processes[parent].children[active_processes[parent].childrenCount] = child;
+    active_processes[parent].children[(int)active_processes[parent].childrenCount] = child;
     active_processes[parent].childrenCount++;
 }
 
@@ -156,7 +156,7 @@ void waitPID(int pid) {
     if (pid == -1) {
         /* wait for children to end */
         for(int i=0;i<active_processes[rpid].childrenCount;i++) {
-            if (active_processes[active_processes[rpid].children[i]].alive) {
+            if ((int)active_processes[(int)active_processes[rpid].children[i]].alive) {
                 waitchild_blocked_processes[rpid] = active_processes[rpid].children[i];
                 blockProcess(rpid);
             }
@@ -257,6 +257,7 @@ size_t getFreePID() {
     for (int i=1;i<MAX_PROCESSES;i++) // halt pid = 0
         if (active_processes[i].alive == false) 
             return i;
+    return MAX_PROCESSES;
 }
 
 char* getName(size_t pid) {
@@ -271,12 +272,12 @@ int startProcess(int priority, void (* process), char argc, char* argv[], char f
     _cli();
     void * processMemory = allocMemory(PAGE_SIZE);
     unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
-    processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, getSTDIN(getRunningPID()), getSTDOUT(getRunningPID()), {1,1}};
+    processType newProcess = (processType){name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, getSTDIN(getRunningPID()), getSTDOUT(getRunningPID()), {1,1}};
     size_t pid = getFreePID();
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
     addChildren(getRunningPID(), pid);
-    if(name == "testPhil"){
+    if(strcmp(name,"testPhil")){
         setTestPhilPID(pid);
     }
     _sti();
@@ -288,8 +289,8 @@ int pipeProcess(int priority, void (* process), char argc, char* argv[], char fo
     void * processMemory = allocMemory(PAGE_SIZE);
     unsigned long rsp = prepare_process(processMemory + PAGE_SIZE, process, argc, argv);
     processType newProcess = {name, true, rsp, ready, argc, argv, processMemory, getRunningPID(), 0, {0}, stdin, stdout, {0}};
-    newProcess.openFDs[stdin] = 1;
-    newProcess.openFDs[stdout] = 1;
+    newProcess.openFDs[(int)stdin] = 1;
+    newProcess.openFDs[(int)stdout] = 1;
     size_t pid = getFreePID();
     active_processes[pid] = newProcess;
     addProcess(priority, rsp, pid, foreground);
@@ -324,7 +325,7 @@ int endProcess(size_t pid) {
         setTestPhilPID(-1);
         kill_philosophers();
     }
-    if(active_processes[pid].name != "philosopher"){
+    if(!strcmp(active_processes[pid].name,"philosopher")){
         enableShell();
     }
     _stint20();
@@ -349,8 +350,8 @@ void halting() {
 
 unsigned long prepareHalt() { // pid = 0 is halt
     void * haltMemory = allocMemory(HALT_PAGE);
-    unsigned long haltrsp = prepare_process(haltMemory + HALT_PAGE, &halting, 1, (char**){"halt"});
-    processType haltProcess = {"halt", true, haltrsp, ready, 1, (char*){"halt"}, haltMemory, getRunningPID(), {0}, 0, 1};
+    unsigned long haltrsp = prepare_process(haltMemory + HALT_PAGE, &halting, 1, (char*[4]){"halt"});
+    processType haltProcess = (processType){"halt", true, haltrsp, ready, 1, (char*[]){"halt"}, haltMemory, getRunningPID(), 0, {0}, 0, 1, {1}};
     active_processes[HALT_PID] = haltProcess;
     return haltrsp;
 }

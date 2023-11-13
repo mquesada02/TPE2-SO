@@ -5,14 +5,13 @@
 #include <MemoryManagerADT.h>
 #include <syscalls.h>
 #include <process.h>
+#include <test_util.h>
 
 
 #define NULL (void*) 0
 
 extern void invalidOperation();
 extern void loopRegisters();
-
-extern uint64_t test_mm(uint64_t argc, char *argv[]);
 
 /**
  * @brief Estructura que contiene el nombre, la descripción y la dirección de la función correspondinte al módulo.
@@ -63,7 +62,7 @@ void startShell() {
  * @param description Breve descripción del módulo.
  * @param function Puntero a la función correspondiente.
  */
-void loadModule(char * name, char * description, void (*function)(void)) {
+void loadModule(char * name, char * description, void (*function)(char, char*[])) {
     modules[modulesCount].name = name;
     modules[modulesCount].description = description;
     modules[modulesCount].function = function;
@@ -114,9 +113,8 @@ void runModule(const char * input, char argc, char * params[]){
     return;
 }
 
-void runProcessAliasPipe(const char * input, char argc, char * params[]) {
+void runProcessAliasPipe(char * input, char argc, char * params[]) {
     /* input: process name for pstart */
-    char* command = "pstart";
     char ** argv = syscall_allocMemory(MAX_PARAMETERS*sizeof(char*));
     argv[0] = "1";
     argv[1] = input;
@@ -232,7 +230,7 @@ void printHelp(char argc, char * argv[]) {
 /**
  * @brief Función correspondiente para el módulo de "time". Imprime el valor de la hora actual del sistema.
  */
-void printTime() {
+void printTime(char argc, char * argv[]) {
     char timeStr[TIME_BUFF_SIZE];
     printf("The current time is ");
     getTime(timeStr);
@@ -243,7 +241,7 @@ void printTime() {
  * @brief Función correspondiente para el módulo de "registers". Imprime el valor de los registros cuando se
  * guardaron al presionar la tecla Alt. Si no se presionó en ningún momento, imprime un mensaje correspondiente.
  */
-void printRegisters() {
+void printRegisters(char argc, char * argv[]) {
     long int * registers = getRegisters();
     if (registers == 0){
         printf("No registers saved. Press 'Alt' to save registers.");
@@ -268,7 +266,7 @@ void printRegisters() {
  * dos números: un dividendo y un divisor. Luego, se imprime en pantalla el valor del cociente y el resto al
  * hacer esa división.
  */
-void divide() {
+void divide(char argc, char* argv[]) {
     char numberStr[DIV_BUFF_SIZE];
     char divisorStr[DIV_BUFF_SIZE];
     char quotientStr[DIV_BUFF_SIZE];
@@ -295,7 +293,7 @@ void divide() {
 /**
  * @brief Función correspondiente al módulo de "clear". Limpia la pantalla de la shell.
  */
-void clear() {
+void clear(char argc, char* argv[]) {
     enableDoubleBuffer(1);
     enableDoubleBuffer(0);
 }
@@ -306,34 +304,34 @@ void clear() {
  * los registros.
  * 
  */
-void testRegisters(){
+void testRegisters(char argc, char * argv[]){
     printf("Press 'Alt' now! (and wait a few seconds)");
     loopRegisters();
 }
 
-void mem() {
+void mem(char argc, char * argv[]) {
     printMemStatus();
 }
 
 int pstartPipe(char argc, char * argv[], char stdin, char stdout) {
     if (strcmp(argv[0],"-a")) {
         printProcesses();
-        return;
+        return MAX_PROCESSES;
     }
     if (argc < 2) {
         printf("Usage: pstart <priority> <process> [args]\n To get available processes, type 'pstart -a'\n");
-        return;
+        return MAX_PROCESSES;
     }
     int priority = strToNum(argv[0]);
     if (priority < 1 || priority > 4) {
         printf("Invalid priority. Valid priorities are 1, 2, 3 and 4.\n");
-        return;
+        return MAX_PROCESSES;
     }
     char foreground = argv[argc-1][0]=='&';
     return launchPipeProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground, stdin, stdout);
 }
 
-int pstart(char argc, char * argv[]) {
+void pstart(char argc, char * argv[]) {
     if (strcmp(argv[0],"-a")) {
         printProcesses();
         return;
@@ -348,11 +346,11 @@ int pstart(char argc, char * argv[]) {
         return;
     }
     char foreground = argv[argc-1][0]=='&';
-    return launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
+    launchProcess(priority, argv[1], argc-(2+foreground), argv+2, !foreground);
 }
 
 
-void printPID() {
+void printPID(char argc, char* argv[]) {
     printCurrentPID();
 }
 
@@ -367,7 +365,7 @@ void killProcess(char argc, char * argv[]) {
     }
 }
 
-void printCurrentProcesses() {
+void printCurrentProcesses(char argc, char * argv[]) {
     syscall_ps();
 }
 
@@ -399,7 +397,7 @@ void changePriority(char argc, char * argv[]) {
 //-------philosophers----------------------------------------------
 #define N 25 /* número mäximo de filósofos */
 
-void testPhil(uint64_t argc, char *argv[]) {
+void testPhil(char argc, char *argv[]) {
     if(argc != 1){
       printf("Invalid number of arguments: must provide initial number of philosophers\n");
       syscall_exit();

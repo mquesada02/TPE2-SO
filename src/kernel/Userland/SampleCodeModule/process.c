@@ -3,6 +3,7 @@
 #include <library.h>
 #include <test_util.h>
 #include <stdint.h>
+#include <MemoryManagerADT.h>
 
 typedef struct process {
     char* name;
@@ -73,6 +74,7 @@ int launchProcess(int priority, char* name, char argc, char* argv[], char foregr
         }
     }
     printf("No process with name '%s' found\n",name);
+    return MAX_PROCESSES;
 }
 
 int launchPipeProcess(int priority, char* name, char argc, char* argv[], char foreground, char stdin, char stdout) {
@@ -82,6 +84,7 @@ int launchPipeProcess(int priority, char* name, char argc, char* argv[], char fo
         }
     }
     printf("No process with name '%s' found\n",name);
+    return MAX_PROCESSES;
 }
 
 void printCurrentPID() {
@@ -104,7 +107,6 @@ void loop(char argc, char* argv[]) {
 }
 
 void infiniteProcess(char argc, char* argv[]) {
-    size_t pid = syscall_getpid();
     while(1) {};
 }
 
@@ -120,7 +122,7 @@ typedef struct MM_rq {
   uint32_t size;
 } mm_rq;
 
-uint64_t test_mm(uint64_t argc, char *argv[]) {
+void test_mm(char argc, char *argv[]) {
   mm_rq mm_rqs[MAX_BLOCKS];
   uint8_t rq;
   uint32_t total;
@@ -183,7 +185,7 @@ int32_t pid;
 enum State state;
 } p_rq;
 
-int64_t test_processes(uint64_t argc, char *argv[]) {
+void test_processes(char argc, char *argv[]) {
   uint8_t rq;
   uint8_t alive = 0;
   uint8_t action;
@@ -265,10 +267,10 @@ void testWaitPID(char argc, char* argv[]) {
   if (argc != 1)
     syscall_exit();
   int children = strToNum(argv[0]);
-  size_t children_pids[children];
+  /* size_t children_pids[children]; */
   char* timeArgv[] = {"5"};
   for (int i=0;i<children;i++) {
-    children_pids[i] = launchProcess(1,"sleep",1,timeArgv,0);
+    /* children_pids[i] =  */launchProcess(1,"sleep",1,timeArgv,0);
   }
   printf("Waiting process started:\nPID: %d\n",syscall_getpid());
   syscall_waitpid(-1);

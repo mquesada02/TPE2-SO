@@ -1,13 +1,12 @@
 #include "./include/semaphore.h"
 
-#define NULL (void *) 0
 #define MAX_LENGTH 30
 #define MAX_SEMS 40
 
 typedef int sem_type;
 
-extern void sem_lock_wait(sem_type *lock);
-extern void sem_lock_post(sem_type *lock);
+extern void sem_lock_wait(char *lock);
+extern void sem_lock_post(char *lock);
 
 typedef struct Node{    
     char lock;
@@ -127,7 +126,7 @@ int sem_wait(sem_type *sem){
     //si se llamo a un unblock process es porque se tenia acceso exclusivo al semaforo, 
     //asi que simplemente no libero ese acceso para que cualquier otro proceso que no sea
     //el que se acaba de desboquear no pueda modificar el semaforo
-    *sem --;
+    (*sem)--;
     sem_lock_post(&(aux->lock));
     return 0;    
 }

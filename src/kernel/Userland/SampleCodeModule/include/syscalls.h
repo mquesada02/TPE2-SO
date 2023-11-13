@@ -56,4 +56,5 @@ int syscall_pipe(int fds[2]);
 int syscall_getstdin();
 int syscall_getstdout();
 int syscall_pipeProcess(int priority, void (* process), char argc, char* argv[], struct processStartSTD * ps);
+int syscall_createPhils(int cant);
 #endif

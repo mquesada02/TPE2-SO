@@ -8,21 +8,21 @@
 #define TIME_BUFF_SIZE 9
 
 void startShell();
-void loadModule(char * name, char * description, void (*function)(void));
+void loadModule(char * name, char * description, void (*function)(char, char *[]));
 void loadAllModules();
 void runModule(const char * input, char argc, char * argv[]);
 void runModulePipe(const char * input, char argc, char * params[], int pipeIndex);
 void printHelp(char argc, char * argv[]);
-void printTime();
-void printRegisters();
-void divide();
-void clear();
-void testRegisters();
-void mem();
-int pstart(char argc, char * argv[]);
+void printTime(char argc, char * argv[]);
+void printRegisters(char argc, char * argv[]);
+void divide(char argc, char * argv[]);
+void clear(char argc, char * argv[]);
+void testRegisters(char argc, char * argv[]);
+void mem(char argc, char * argv[]);
+void pstart(char argc, char * argv[]);
 int pstartPipe(char argc, char * argv[], char stdin, char stdout);
-void printPID();
-void printCurrentProcesses();
+void printPID(char argc, char* argv[]);
+void printCurrentProcesses(char argc, char* argv[]);
 void killProcess(char argc, char * argv[]);
 void blockProcess(char argc, char * argv[]);
 void changePriority(char argc, char * argv[]);
