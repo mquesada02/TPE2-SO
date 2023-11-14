@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <shell.h>
 #include <library.h>
 #include <pong.h>
@@ -213,7 +215,7 @@ void printHelp(char argc, char * argv[]) {
             print(" - ", GREEN);
             print(modules[i].name, GREEN);
             printf(" : ");
-            printf(modules[i].description);
+            printf("%s",modules[i].description);
         }
     } else if (argc == 1 && argv[0][0] == '2') {
         for(int i=TOTAL_MODULES/2; i<TOTAL_MODULES; i++) {
@@ -221,7 +223,7 @@ void printHelp(char argc, char * argv[]) {
             print(" - ", GREEN);
             print(modules[i].name, GREEN);
             printf(" : ");
-            printf(modules[i].description);
+            printf("%s",modules[i].description);
         }
     } else {
         printf("Invalid page number. Valid pages are 1 and 2.");
@@ -238,7 +240,7 @@ void printTime(char argc, char * argv[]) {
     char timeStr[TIME_BUFF_SIZE];
     printf("The current time is ");
     getTime(timeStr);
-    printf(timeStr);
+    printf("%s",timeStr);
 }
 
 /**
@@ -260,7 +262,7 @@ void printRegisters(char argc, char * argv[]) {
         print(register_names[i], ORANGE);
         printf(" = ");
         numToStr(registers[i], 16, buffer);
-        printf(buffer);
+        printf("%s",buffer);
         printf("h");
     }
 }
@@ -288,10 +290,10 @@ void divide(char argc, char* argv[]) {
     numToStr(remainder, 10, remainderStr);
     printf("\n");
     printf("Quotient: ");
-    printf(quotientStr);
+    printf("%s",quotientStr);
     printf("\n");
     printf("Remainder: ");
-    printf(remainderStr);
+    printf("%s",remainderStr);
 }
 
 /**
