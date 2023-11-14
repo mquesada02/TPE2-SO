@@ -3,7 +3,7 @@ sudo docker start SO
 sudo docker exec -it SO make clean -C/root/Toolchain
 sudo docker exec -it SO make clean -C/root/
 sudo docker exec -it SO make -C/root/Toolchain
-sudo docker exec -it SO make -C/root/
+sudo docker exec -it SO make MM=${1:-a} -C/root/
 sudo docker stop SO
 if [ $1 = "gdb" ]
 then

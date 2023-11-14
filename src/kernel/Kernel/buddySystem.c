@@ -60,15 +60,15 @@ void createMM(){
         bs->freeList[i] = NULL; 
     }
     //inicialmente solo esta libre el bloque mas grande
-    newNode(bs->freeList[MAX_ALLOC_LOG2 - 1], 0, MAX_ALLOC-1);
+    nNode(&(bs->freeList[MAX_ALLOC_LOG2 - 1]), 0, MAX_ALLOC-1);
 }
 
-void newNode(List list, unsigned int lb, unsigned int ub){
+void nNode(List *list, unsigned int lb, unsigned int ub){
     Node * newNode = (Node *) lastPhysicalAddress;
     newNode->mem.ub = ub;
     newNode->mem.lb = lb;
-    newNode->next = list;
-    list = newNode;
+    newNode->next = *list;
+    *list = newNode;
     lastPhysicalAddress += sizeof(Node);
 }
 
@@ -125,10 +125,10 @@ void * allocMemory(size_t size){
 
     i--;
     for(; i >= x; i--){
-        newNode(bs->freeList[i], aux->mem.lb + (aux->mem.ub - aux->mem.lb + 1)/2, aux->mem.ub);
+        nNode(&bs->freeList[i], aux->mem.lb + (aux->mem.ub - aux->mem.lb + 1)/2, aux->mem.ub);
         aux->mem.ub = aux->mem.lb + (aux->mem.ub - aux->mem.lb)/2;
     }
-    newNode(bs->occupiedList, aux->mem.lb, aux->mem.ub);
+    nNode(&bs->occupiedList, aux->mem.lb, aux->mem.ub);
     bs->occupied += pow(2, x);
     bs->free -= pow(2, x);
     return bs->dataMemory + aux->mem.lb;
