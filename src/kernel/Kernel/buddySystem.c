@@ -15,8 +15,6 @@
 #define MIN_ALLOC_LOG2 4
 #define LISTS_SIZE MAX_ALLOC / MIN_ALLOC * sizeof(Node) //
 
-#define NULL (void *) 0
-
 typedef struct pair{
     unsigned int lb;
     unsigned int ub;
@@ -43,6 +41,8 @@ void* currentAddress = (void *) (HEAP_STARTING_ADDRESS+sizeof(BuddyStruct));
 static void* lastPhysicalAddress = NULL;
 
 static BuddySystem bs = NULL; 
+
+void nNode(List *list, unsigned int lb, unsigned int ub);
 
 void * allocFirst(size_t size) {
     void * aux = currentAddress;
@@ -222,6 +222,7 @@ int freeMemory(void * data){
             return true;
         }
     }
+    return true;
 }
 
 void getMemStatus(size_t * free, size_t * occupied) {
