@@ -23,7 +23,7 @@ $(KERNEL): $(LOADEROBJECT) $(OBJECTS) $(OBJECTS_DRIVERS) $(OBJECTS_LIB) $(STATIC
 	$(LD) $(LDFLAGS) -T kernel.ld --oformat=elf64-x86-64 -o $(GDB) $(LOADEROBJECT) $(OBJECTS) $(OBJECTS_ASM) $(OBJECTS_DRIVERS) $(OBJECTS_LIB) $(STATICLIBS)
 
 %.o: %.c
-	$(GCC) $(GCCFLAGS) -I./include -I./drivers/include -c $< -o $@
+	$(GCC) $(GCCFLAGS) -I./include -I./drivers/include -c $< -D$(MM) -o $@
 
 %.o : %.asm
 	$(ASM) $(ASMFLAGS) $< -o $@

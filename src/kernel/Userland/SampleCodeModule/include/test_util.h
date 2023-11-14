@@ -4,6 +4,7 @@
 
 void test_mm(char argc, char *argv[]);
 void test_processes(char argc, char *argv[]);
+void test_prio(char argc, char * argv[]);
 // utils
 
 uint32_t GetUint();

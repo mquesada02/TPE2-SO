@@ -75,12 +75,12 @@ void loadModule(char * name, char * description, void (*function)(char, char*[])
 void loadAllModules() {
     loadModule("help", "Prints name and description for all the functionalities available for the user", &printHelp);
     loadModule("time", "Prints the current time of the system", &printTime);
-    loadModule("registers", "Prints the values of the processor's registers at the instant they were saved. Registers are saved by pressing Alt", &printRegisters);
+    //loadModule("registers", "Prints the values of the processor's registers at the instant they were saved. Registers are saved by pressing Alt", &printRegisters);
     loadModule("divide", "Asks for two numbers and prints the result of dividing one by the other", &divide);
     //loadModule("pong", "Starts the arcade game Pong for two players", &playPong);
     loadModule("clear", "Clears the screen of the shell", &clear);
     //loadModule("invop", "Performs an invalid assembly operation (mov cr6, 0x77) and throws an invalid operation exception", &invalidOperation);
-    loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
+    //loadModule("testReg", "Sets all registers(except r12, rsp and rbp) at 33h and gives time for pressing 'Alt' and testing the functionality 'registers'", &testRegisters);
     loadModule("mem", "Prints the memory status", &mem);
     loadModule("pid", "Prints the pid of the current process", &printPID);
     loadModule("pstart", "Start a new process given a priority and process name", &pstart);
@@ -184,8 +184,9 @@ void runModulePipe(const char * input, char argc, char * params[], int pipeIndex
         printf("Error creating pipe.\n");
         return;
     }
-    (params+pipeIndex+1)[argc-(pipeIndex+1)] = "&"; // al segundo proceso lo mando al bg siempre
-    pstartPipe(argc-(pipeIndex+1)+1, params+(pipeIndex+1), fds[0], 1);
+    (params+pipeIndex+1)[argc-(pipeIndex+1)] = "*"; // al segundo proceso lo mando al bg siempre
+    (params+pipeIndex+1)[argc-(pipeIndex+1)+1] = "&";
+    pstartPipe(argc-(pipeIndex+1)+1+1, params+(pipeIndex+1), fds[0], 1);
     pstartPipe(pipeIndex, params, 0, fds[0]);
     
 

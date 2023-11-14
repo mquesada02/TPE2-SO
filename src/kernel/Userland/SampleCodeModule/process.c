@@ -50,6 +50,7 @@ void initProcesses() {
     loadProcess("testMem","Memory testing process", &test_mm);
     loadProcess("waitpid","Testing waitpid", &testWaitPID);
     loadProcess("testProcesses","Test the processes functions", &test_processes);
+    loadProcess("testPrio", "Test the priority change", &test_prio);
     loadProcess("testPhil","Test the philosophers problem", &testPhil);
     loadProcess("testPipes","Test the pipes", &testPipes);
     loadProcess("pipeSender","Pipe sender for testing the pipes", &pipeSender);
@@ -107,7 +108,11 @@ void loop(char argc, char* argv[]) {
 }
 
 void infiniteProcess(char argc, char* argv[]) {
-    while(1) {};
+    while(1) {
+      if (argc > 0) {
+        printf("My lucky number is %s!\n",argv[argc-1]);
+      }
+    };
 }
 
 // ---------------------------------------------- TESTS ----------------------------------------------
@@ -259,6 +264,56 @@ void test_processes(char argc, char *argv[]) {
         }
     }
   //}
+  syscall_exit();
+}
+
+#define MINOR_WAIT 60 // TODO: Change this value to prevent a process from flooding the screen
+#define WAIT 120      // TODO: Change this value to make the wait long enough to see theese processes beeing run at least twice
+
+#define TOTAL_PROCESSES 4
+#define LOWEST 4  // TODO: Change as required
+#define MEDIUM_LOW 3 // TODO: Change as required
+#define MEDIUM_HIGH 2
+#define HIGHEST 1 // TODO: Change as required
+
+int64_t prio[TOTAL_PROCESSES] = {LOWEST, MEDIUM_LOW, MEDIUM_HIGH, HIGHEST};
+
+void test_prio(char argc, char * params[]) {
+  int64_t pids[TOTAL_PROCESSES];
+  char *argv [] = {"1","2","3","4"};
+  uint64_t i;
+
+  for (i = 0; i < TOTAL_PROCESSES; i++) {
+    pids[i] = launchProcess(1, "looping", i+1, argv, 0);
+  }
+
+  sleep(WAIT);
+  printf("\nCHANGING PRIORITIES...\n");
+
+  for (i = 0; i < TOTAL_PROCESSES; i++)
+    syscall_changePriority(pids[i], prio[i]);
+
+  sleep(WAIT);
+  printf("\nBLOCKING...\n");
+
+  for (i = 0; i < TOTAL_PROCESSES; i++)
+    syscall_switchBlock(pids[i]);
+
+  printf("CHANGING PRIORITIES WHILE BLOCKED...\n");
+
+  for (i = 0; i < TOTAL_PROCESSES; i++)
+    syscall_changePriority(pids[i], MEDIUM_HIGH);
+
+  printf("UNBLOCKING...\n");
+
+  for (i = 0; i < TOTAL_PROCESSES; i++)
+    syscall_switchBlock(pids[i]);
+
+  sleep(WAIT);
+  printf("\nKILLING...\n");
+
+  for (i = 0; i < TOTAL_PROCESSES; i++)
+    syscall_kill(pids[i]);
   syscall_exit();
 }
 
