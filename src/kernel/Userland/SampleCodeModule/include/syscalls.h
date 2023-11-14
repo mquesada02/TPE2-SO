@@ -57,4 +57,6 @@ int syscall_getstdin();
 int syscall_getstdout();
 int syscall_pipeProcess(int priority, void (* process), char argc, char* argv[], struct processStartSTD * ps);
 int syscall_createPhils(int cant);
+int syscall_removePhil();
+int syscall_createPhil();
 #endif

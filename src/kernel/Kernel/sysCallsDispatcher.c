@@ -176,6 +176,12 @@ long int syscallsDispatcher (uint64_t syscall, long int param1, uint64_t param2,
         case 37:
             createPhils(param1);
             break;
+        case 38:
+            createPhil();
+            break;
+        case 39:
+            removePhil();
+            break;
 	}
 	return 0;
 }

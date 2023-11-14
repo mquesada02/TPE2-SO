@@ -38,24 +38,11 @@ void keyboard_handler() {
     size_t fg = getForegroundPID();
 	unsigned char asciiCode = scanCodeToASCII(character);
     if (asciiCode) {
-
-
-    if (fg == getTestPhilPID()){
-        if (asciiCode == 'a'){
-            createPhil();
-        }
-        if (asciiCode == 'r'){
-            removePhil();
-        }
-    }
         
     if (ctrlActivated){
         if (asciiCode == 'c'){
             drawString("^C Killed.",0xFFFFFF,0x000000);
             drawNextLine();
-            if (fg==getTestPhilPID()){
-                kill_philosophers();
-            }
             killProcess(fg);
             return 0;
         }

@@ -1,12 +1,12 @@
 #include "./include/semaphore.h"
 
 #define MAX_LENGTH 30
-#define MAX_SEMS 40
+#define MAX_SEMS 25
 
 typedef int sem_type;
 
-extern void sem_lock_wait(char *lock);
-extern void sem_lock_post(char *lock);
+extern void sem_lock_wait(char * lock, sem_type * sem);
+extern void sem_lock_post(char * lock, sem_type * sem);
 
 typedef struct Node{    
     char lock;
@@ -111,42 +111,42 @@ int sem_close(sem_type* sem){
 
 int sem_wait(sem_type *sem){
     Node* aux = semList;
-    while(aux != NULL && aux->sem == sem){
+    while(aux != NULL && aux->sem != sem){
         aux = aux->next;
     }
     if(aux == NULL){
         return -1;
     }
-    sem_lock_wait(&(aux->lock));
+    sem_lock_wait(&(aux->lock), aux->sem);
     if(*sem == 0){
-        sem_lock_post(&(aux->lock));
-        blockSemProcess(getRunningPID(), sem, 0);
+        sem_lock_post(&(aux->lock), aux->sem);
+        blockSemProcess(sem, 0);
     }
     //si sigo es porque se desbloqueo el proceso
     //si se llamo a un unblock process es porque se tenia acceso exclusivo al semaforo, 
     //asi que simplemente no libero ese acceso para que cualquier otro proceso que no sea
     //el que se acaba de desboquear no pueda modificar el semaforo
     (*sem)--;
-    sem_lock_post(&(aux->lock));
+    sem_lock_post(&(aux->lock), aux->sem);
     return 0;    
 }
 
 int sem_post(sem_type *sem){
     Node* aux = semList;
-    while(aux != NULL && aux->sem == sem){
+    while(aux != NULL && aux->sem != sem){
         aux = aux->next;
     }
     if(aux == NULL){
         return -1;
     }
-    sem_lock_wait(&(aux->lock));
+    sem_lock_wait(&(aux->lock), aux->sem);
     (*sem)++;
     if(unblockSemProcess(sem, 0)){
         //no hago un sem_lock_post porque el semaforo lo esta accediendo ahora el proceso que se desbloqueo
         return 0;
     }
     //si no habia nungun proceso esperando a ese semaforo
-    sem_lock_post(&(aux->lock));
+    sem_lock_post(&(aux->lock), aux->sem);
     return 0; 
 }
 

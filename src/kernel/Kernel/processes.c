@@ -33,7 +33,7 @@ typedef struct process {
 processType active_processes[MAX_PROCESSES+1];
 char keyboard_blocked_processes[MAX_PROCESSES];
 size_t waitchild_blocked_processes[MAX_PROCESSES];
-void * sem_blocked_processes[MAX_PROCESSES];
+sem_type * sem_blocked_processes[MAX_PROCESSES];
 char waiting_sem_locked[MAX_PROCESSES];
 int fd_blocked_processes[MAX_PROCESSES];
 static int j = 0;
@@ -203,15 +203,15 @@ void unblockProcess(size_t pid) {
 
 void blockKeyboardProcess(size_t pid) {
     if (pid < 0 || pid >= MAX_PROCESSES) return;
-    blockProcess(pid);
     keyboard_blocked_processes[pid] = true;
+    blockProcess(pid);
 }
 
-void blockSemProcess(size_t pid, sem_type * sem, char waiting_locked) {
-    if (pid < 0 || pid >= MAX_PROCESSES) return;
-    blockProcess(pid);
+void blockSemProcess(sem_type * sem, char waiting_locked) {
+    size_t pid = getRunningPID();
     sem_blocked_processes[pid] = sem;
     waiting_sem_locked[pid] = waiting_locked;
+    blockProcess(pid);
 }
 
 int isKBlocked(size_t pid) {
@@ -323,11 +323,10 @@ int endProcess(size_t pid) {
     freeMemory(active_processes[pid].dataMemory);
     if(pid == getTestPhilPID()){
         setTestPhilPID(-1);
-        kill_philosophers();
     }
-    if(!strcmp(active_processes[pid].name,"philosopher")){
+    //if(!strcmp(active_processes[pid].name,"philosopher")){
         enableShell();
-    }
+    //}
     _stint20();
     return 0;
 }
@@ -339,6 +338,9 @@ void exitProcess() {
 }
 
 int killProcess(size_t pid) {
+    if (pid==getTestPhilPID()){
+        kill_philosophers();
+    }
     return endProcess(pid);
 }
 
@@ -364,6 +366,8 @@ void philosopher(uint64_t argc, char *argv[]) /* 1 parametro: número de filóso
     exitProcess();
 
   int i = satoi(argv[0]);
+  //drawString("philosopher", 0xFFFFFF, 0x000000);
+  //drawString(argv[0], 0xFFFFFF, 0x000000);
 
   while(1){ /* se repite en forma indefinida */
     think(); /* el filósofo está pensando */
@@ -381,37 +385,43 @@ void createPhils(int cant){
 }
 
 void createPhil(){
-  if(last_i >= N)
-    return;
-  char ** buffer = allocMemory(sizeof(char*));
-  buffer[0] = allocMemory(3*sizeof(char));
-  numToStr(last_i, 10, buffer[0]);
-
-  char aux[7] = {'p', 'h', 'i', 'l'};
-  ph_state[last_i] = THINKING;
-  aux[4] = buffer[0][0];
-  aux[5] = buffer[0][1];
-  aux[6] = '\0';
-  s[last_i] = sem_open(aux, 1);
-
-  philosopherPIDs[last_i] = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
-  last_i++;
-  freeMemory(buffer[0]);
-  freeMemory(buffer);
+    sem_wait(mutex);
+    if(last_i >= N){
+        sem_post(mutex);
+        return;
+    }
+    char ** buffer = allocMemory(sizeof(char*));
+    buffer[0] = allocMemory(3*sizeof(char));
+    numToStr(last_i, 10, buffer[0]);
+  
+    char aux[7] = {'p', 'h', 'i', 'l'};
+    ph_state[last_i] = THINKING;
+    aux[4] = buffer[0][0];
+    aux[5] = buffer[0][1];
+    aux[6] = '\0';
+    s[last_i] = sem_open(aux, 0);
+  
+    philosopherPIDs[last_i] = startProcess(2, &philosopher, 1, buffer, 0, "philosopher");
+    last_i++;
+    sem_post(mutex);
 }
 
 void removePhil(){
-  if(last_i <= 2)
-    return;
-  last_i--;
-  killProcess(philosopherPIDs[last_i]);
-  sem_close(s[last_i]);
+    sem_wait(mutex);
+    if(last_i <= 2){
+        sem_post(mutex);
+        return;
+    }
+    last_i--;
+    killProcess(philosopherPIDs[last_i]);
+    sem_close(s[last_i]);
+    sem_post(mutex);
 }
 
 void kill_philosophers(){
     for (int i = 0; i < last_i; i++){
         sem_close(s[i]);
-        killProcess(philosopherPIDs[i]);
+        endProcess(philosopherPIDs[i]);
     }
     last_i = 0;
     sem_close(mutex);

@@ -29,11 +29,11 @@ void test(int i);
 // }
 
 void think(){
-    wait(GetUniform(5));
+    wait(3);
 }
 
 void eat(){
-    wait(GetUniform(5));
+    wait(2);
 }
 
 void take_forks(int i) /* i: número de filósofo, de 0 a N1 */
@@ -56,11 +56,12 @@ void leave_forks(int i) /* i: número de filósofo, de 0 a N–1 */
 
 void test(int i) /* i: número de filósofo, de 0 a N1 */
 {
-    if (ph_state[i] == HUNGRY && ph_state[LEFT] != EATING && ph_state[RIGHT] != EATING) {
+    if ((ph_state[i] == HUNGRY) && (ph_state[LEFT] != EATING) && (ph_state[RIGHT] != EATING)) {
         ph_state[i] = EATING;
         write_state();
         sem_post(s[i]);
     }
+    
 }
 
 void write_state(){
@@ -68,7 +69,7 @@ void write_state(){
     char buffer[2*N+1];
     int i;
     for(i=0; i<last_i; i++){
-        buffer[2*i] = ph_state[i]==EATING? 'E' : ph_state[i]==HUNGRY? 'H' : 'T';
+        buffer[2*i] = ph_state[i]==EATING? 'E' : '.';
         buffer[2*i+1] = ' ';
     }
     buffer[2*i] = '\0';

@@ -36,6 +36,8 @@ GLOBAL syscall_getstdout
 GLOBAL syscall_pipeProcess
 GLOBAL syscall_writeScreen
 GLOBAL syscall_createPhils
+GLOBAL syscall_createPhil
+GLOBAL syscall_removePhil
 
 section .text
 
@@ -345,10 +347,24 @@ syscall_writeScreen:
 	popf
 	ret
 
-syscall_createPhils
+syscall_createPhils:
 	pushf
 	mov rsi, rdi
 	mov rdi, 37
+	int 80h
+	popf
+	ret
+
+syscall_createPhil:
+	pushf
+	mov rdi, 38
+	int 80h
+	popf
+	ret
+
+syscall_removePhil:
+	pushf
+	mov rdi, 39
 	int 80h
 	popf
 	ret

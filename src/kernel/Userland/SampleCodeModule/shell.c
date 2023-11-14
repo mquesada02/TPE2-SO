@@ -143,6 +143,9 @@ void runProcessAliasPipe(char * input, char argc, char * params[]) {
         pstartPipe(argc-(pipeIndex+1)+3, argv, fds[0], 1);
         return;
     } else {
+        for(int i=2;i<argc+2;i++) {
+            argv[i] = params[i-2];
+        }
         pstart(argc+2, argv);
         return;
     }
@@ -412,7 +415,16 @@ void testPhil(char argc, char *argv[]) {
 
     syscall_createPhils(cant); 
 
-    while(1);
+    char c;
+    while(1){
+        c = getChar();
+        if(c == 'a'){
+            syscall_createPhil();
+        }
+        if(c=='r'){
+            syscall_removePhil();
+        }
+    }
     // while(1){
     //   write_state();
     //   sleep(3);
