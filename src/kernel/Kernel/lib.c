@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdint.h>
 #include <processes.h>
 #include <interrupts.h>
@@ -287,7 +289,7 @@ void strcpy(char * dest, char * src, int destSize){
 
 int strcmplen(char * str1, char * str2, int len){
 	int i = 0;
-	while(str1[i] != '\0' && str2[i] != '\0' && i < len){
+	while(i < len && str1[i] != '\0' && str2[i] != '\0'){
 		if (str1[i] != str2[i]){
 			return 1;
 		}

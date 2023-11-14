@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <pong.h>
 #include <library.h>
 
@@ -295,7 +297,7 @@ void drawBall() {
  */
 void changeBallAngle(int idx) {
     int impact_point = ball.y - paddles[idx].y;
-    double div_factor = 1/7;
+    double div_factor = 1.0/7.0;
     if(impact_point < PADDLE_HEIGHT*div_factor) {
         ball.dy = 5;
     }

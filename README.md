@@ -12,10 +12,15 @@ En este trabajo se creará un Kernel propio simple. Para ello, se implementará 
 
 ## Compilación y ejecución
 
-Para compilar y ejecutar, se debe estar ubicado en la carpeta del mismo repositorio, y ejecutar los siguientes comandos:
+Para compilar y ejecutar, se debe estar ubicado en la carpeta `src/kernel` del mismo repositorio, y ejecutar los siguientes comandos:
 
 ```
-$> make all
+$> make clean
+$> make all MM=MS
+```
+y luego correr el siguiente comando:
+```
+sudo qemu-system-x86_64 -hda Image/x64BareBonesImage.qcow2 -m 512 -d int -audiodev coreaudio,id=audio0 -machine pcspk-audiodev=audio0
 ```
 
 
@@ -27,12 +32,6 @@ $> make all
 
 Puede ejecutar el comando `sudo ./setup.sh` para instalar todas las dependencias necesarias.
 
-## Formating
-
-Para ejecutar el formatter `Clang-format`, se debe correr el siguiente comando:
-```
-$> make format
-```
 ## Authors
 
 - [@mquesada02](https://www.github.com/mquesada02)
